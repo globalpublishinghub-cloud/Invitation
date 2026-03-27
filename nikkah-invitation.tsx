@@ -3,15 +3,13 @@
 import { Button } from "@/components/ui/button"
 import { useState, useEffect, useRef } from "react"
 
-// Global audio instance to prevent double play
-let globalAudio: HTMLAudioElement | null = null
-let audioHasStarted = false
-
 export default function Component() {
   const [currentPage, setCurrentPage] = useState("cover")
   const [loadingProgress, setLoadingProgress] = useState(0)
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 })
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const audioStartedRef = useRef(false)
 
   useEffect(() => {
     const targetDate = new Date("2026-04-03T16:30:00").getTime()
@@ -35,6 +33,12 @@ export default function Component() {
     return () => {
       if (progressIntervalRef.current) {
         clearInterval(progressIntervalRef.current)
+      }
+      // Cleanup audio on unmount
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current.src = ""
+        audioRef.current = null
       }
     }
   }, [])
@@ -82,80 +86,105 @@ export default function Component() {
   }
 
   const startAudio = () => {
-    // Only create and play audio once ever
-    if (audioHasStarted) return
-    audioHasStarted = true
+    // Strict guard - only play once
+    if (audioStartedRef.current) {
+      return
+    }
+    audioStartedRef.current = true
 
-    if (!globalAudio) {
-      globalAudio = new Audio()
-      globalAudio.src = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/0627%282%29-fHKFYsFQhHNnJVWGHooruickURw9h3.MP3"
-      globalAudio.loop = true
-      globalAudio.volume = 0.7
+    // Create audio element only once
+    if (!audioRef.current) {
+      const audio = new Audio()
+      audio.src = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/0627%282%29-fHKFYsFQhHNnJVWGHooruickURw9h3.MP3"
+      audio.loop = true
+      audio.volume = 0.7
+      audio.preload = "auto"
+      audioRef.current = audio
     }
 
-    globalAudio.play().catch(() => {
-      // Silent fail - audio autoplay blocked
-      audioHasStarted = false
-    })
+    // Play with error handling
+    const playPromise = audioRef.current.play()
+    if (playPromise !== undefined) {
+      playPromise.catch(() => {
+        // Reset flag if autoplay blocked
+        audioStartedRef.current = false
+      })
+    }
   }
 
   const stopAudio = () => {
-    if (globalAudio) {
-      globalAudio.pause()
-      globalAudio.currentTime = 0
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.currentTime = 0
     }
-    audioHasStarted = false
+    audioStartedRef.current = false
   }
 
   const handleOpenInvitation = () => {
     setCurrentPage("loading")
     setLoadingProgress(0)
+    
+    // Reset audio state for fresh start
+    audioStartedRef.current = false
 
-    let audioTriggered = false
+    let localProgress = 0
+    let audioTriggeredLocal = false
 
     progressIntervalRef.current = setInterval(() => {
-      setLoadingProgress((prev) => {
-        const newProgress = prev + 2
+      localProgress += 2
+      
+      // Trigger audio exactly once at 50%
+      if (localProgress >= 50 && !audioTriggeredLocal) {
+        audioTriggeredLocal = true
+        startAudio()
+      }
 
-        if (newProgress >= 50 && !audioTriggered) {
-          audioTriggered = true
-          startAudio()
+      if (localProgress >= 100) {
+        if (progressIntervalRef.current) {
+          clearInterval(progressIntervalRef.current)
+          progressIntervalRef.current = null
         }
-
-        if (newProgress >= 100) {
-          if (progressIntervalRef.current) {
-            clearInterval(progressIntervalRef.current)
-            progressIntervalRef.current = null
-          }
-          setTimeout(() => setCurrentPage("invitation"), 500)
-          return 100
-        }
-        return newProgress
-      })
+        setLoadingProgress(100)
+        setTimeout(() => setCurrentPage("invitation"), 500)
+        return
+      }
+      
+      setLoadingProgress(localProgress)
     }, 60)
   }
 
-  // ─── Cover Page with Video Background ────────────────────────────────────────
+  // ─── Cover Page with Elegant Background ────────────────────────────────────────
   if (currentPage === "cover") {
     return (
       <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4">
-        {/* Video Background */}
+        {/* Elegant Gradient Background */}
         <div className="fixed inset-0 z-0">
-          <video
-            autoPlay
-            muted
-            loop
-            playsInline
-            className="absolute w-full h-full object-cover"
-            poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Crect fill='%23f5efe6'/%3E%3C/svg%3E"
-          >
-            <source
-              src="https://videos.pexels.com/video-files/4909835/4909835-uhd_1440_2732_25fps.mp4"
-              type="video/mp4"
-            />
-          </video>
-          {/* Overlay for text readability */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/50" />
+          {/* Base gradient */}
+          <div 
+            className="absolute inset-0"
+            style={{
+              background: 'linear-gradient(135deg, #1a1512 0%, #2d2420 25%, #3d322a 50%, #2d2420 75%, #1a1512 100%)'
+            }}
+          />
+          {/* Shimmer overlay */}
+          <div 
+            className="absolute inset-0 opacity-30"
+            style={{
+              background: 'radial-gradient(ellipse at 30% 20%, rgba(201, 160, 160, 0.3) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, rgba(139, 115, 85, 0.3) 0%, transparent 50%)'
+            }}
+          />
+          {/* Floating decorative elements */}
+          <div className="absolute top-20 left-10 w-32 h-32 rounded-full bg-[#c9a0a0]/10 blur-3xl float" style={{ animationDelay: '0s' }} />
+          <div className="absolute top-40 right-16 w-24 h-24 rounded-full bg-[#f0d9a0]/10 blur-2xl float" style={{ animationDelay: '1s' }} />
+          <div className="absolute bottom-32 left-20 w-20 h-20 rounded-full bg-[#8b7355]/15 blur-2xl float" style={{ animationDelay: '2s' }} />
+          <div className="absolute bottom-48 right-10 w-28 h-28 rounded-full bg-[#c9a0a0]/10 blur-3xl float" style={{ animationDelay: '0.5s' }} />
+          {/* Subtle pattern */}
+          <div 
+            className="absolute inset-0 opacity-5"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23f0d9a0' fill-opacity='0.8'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            }}
+          />
         </div>
 
         <div className="text-center space-y-10 max-w-md mx-auto relative z-10">
