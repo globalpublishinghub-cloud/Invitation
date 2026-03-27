@@ -1,14 +1,15 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 
 export default function Component() {
   const [currentPage, setCurrentPage] = useState("cover")
   const [loadingProgress, setLoadingProgress] = useState(0)
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 })
   const audioRef = useRef<HTMLAudioElement | null>(null)
-  const audioInitializedRef = useRef(false)
+  const isAudioInitialized = useRef(false)
+  const isAudioPlaying = useRef(false)
 
   useEffect(() => {
     const targetDate = new Date("2026-04-03T16:30:00").getTime()
@@ -25,6 +26,17 @@ export default function Component() {
       }
     }, 1000)
     return () => clearInterval(timer)
+  }, [])
+
+  // Cleanup audio on unmount
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current.src = ""
+        audioRef.current = null
+      }
+    }
   }, [])
 
   const handleSaveTheDate = () => {
@@ -69,57 +81,67 @@ export default function Component() {
     window.open(`https://wa.me/${phoneNumber}?text=${message}`, "_blank")
   }
 
-  const initializeAudio = async () => {
-    // Prevent double initialization
-    if (audioInitializedRef.current) return
-    audioInitializedRef.current = true
+  const initializeAndPlayAudio = useCallback(async () => {
+    // Strict guard against multiple initializations
+    if (isAudioInitialized.current || isAudioPlaying.current) {
+      return
+    }
+    
+    isAudioInitialized.current = true
 
     try {
-      const audioSrc = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/0627%282%29-fHKFYsFQhHNnJVWGHooruickURw9h3.MP3"
+      // If there's already an audio element, clean it up first
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current.src = ""
+        audioRef.current = null
+      }
+
       const audio = new Audio()
       audio.crossOrigin = "anonymous"
       audio.loop = true
       audio.volume = 0.7
       audio.preload = "auto"
+      audio.src = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/0627%282%29-fHKFYsFQhHNnJVWGHooruickURw9h3.MP3"
       audioRef.current = audio
-      audio.src = audioSrc
 
-      await new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => reject(new Error("Audio loading timeout")), 10000)
-        audio.addEventListener("canplaythrough", () => { clearTimeout(timeout); resolve(true) }, { once: true })
-        audio.addEventListener("error", () => { clearTimeout(timeout); reject(new Error("Audio loading failed")) }, { once: true })
+      await new Promise<void>((resolve, reject) => {
+        const timeout = setTimeout(() => reject(new Error("timeout")), 10000)
+        audio.addEventListener("canplaythrough", () => {
+          clearTimeout(timeout)
+          resolve()
+        }, { once: true })
+        audio.addEventListener("error", () => {
+          clearTimeout(timeout)
+          reject(new Error("load failed"))
+        }, { once: true })
         audio.load()
       })
 
-      const playPromise = audio.play()
-      if (playPromise !== undefined) {
-        playPromise.catch(() => {
-          const playOnInteraction = () => {
-            audio.play().then(() => {
-              document.removeEventListener("click", playOnInteraction)
-              document.removeEventListener("touchstart", playOnInteraction)
-            }).catch(() => {})
-          }
-          document.addEventListener("click", playOnInteraction, { once: true })
-          document.addEventListener("touchstart", playOnInteraction, { once: true })
-        })
+      if (!isAudioPlaying.current) {
+        isAudioPlaying.current = true
+        await audio.play()
       }
-    } catch (error) {
-      console.error("Audio setup failed:", error)
+    } catch {
+      isAudioInitialized.current = false
+      isAudioPlaying.current = false
     }
-  }
+  }, [])
 
-  const handleOpenInvitation = async () => {
+  const handleOpenInvitation = () => {
     setCurrentPage("loading")
     setLoadingProgress(0)
+    
+    let audioStarted = false
 
     const progressInterval = setInterval(() => {
       setLoadingProgress((prev) => {
         const newProgress = prev + 2
 
-        // Initialize audio at 50% progress (only once)
-        if (newProgress >= 50 && prev < 50) {
-          initializeAudio()
+        // Start audio at 50% (only once)
+        if (newProgress >= 50 && !audioStarted) {
+          audioStarted = true
+          initializeAndPlayAudio()
         }
 
         if (newProgress >= 100) {
@@ -132,29 +154,133 @@ export default function Component() {
     }, 60)
   }
 
+  const stopAudio = () => {
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.src = ""
+      audioRef.current = null
+    }
+    isAudioInitialized.current = false
+    isAudioPlaying.current = false
+  }
+
+  // Decorative Background Component
+  const DecorativeBackground = () => (
+    <div className="fixed inset-0 z-0 overflow-hidden">
+      {/* Base gradient - warm cream tones */}
+      <div 
+        className="absolute inset-0"
+        style={{
+          background: 'linear-gradient(180deg, #f5efe6 0%, #ebe4d8 30%, #e8dcc8 60%, #f2ebe0 100%)'
+        }}
+      />
+      
+      {/* Subtle texture overlay */}
+      <div 
+        className="absolute inset-0 opacity-30"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c9a0a0' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+        }}
+      />
+
+      {/* Top floral decoration */}
+      <svg className="absolute top-0 left-0 w-full h-48 opacity-60" viewBox="0 0 400 150" preserveAspectRatio="xMidYMin slice">
+        <defs>
+          <linearGradient id="rose1" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#d4a5a5" />
+            <stop offset="100%" stopColor="#c9a0a0" />
+          </linearGradient>
+          <linearGradient id="leaf1" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#8fa87a" />
+            <stop offset="100%" stopColor="#7a9568" />
+          </linearGradient>
+        </defs>
+        
+        {/* Left branch */}
+        <path d="M0 0 Q50 30, 80 60 Q110 90, 150 100" stroke="#7a9568" strokeWidth="2" fill="none" opacity="0.7"/>
+        <ellipse cx="30" cy="15" rx="12" ry="8" fill="url(#rose1)" transform="rotate(-20 30 15)"/>
+        <ellipse cx="60" cy="40" rx="10" ry="6" fill="url(#rose1)" transform="rotate(-10 60 40)"/>
+        <ellipse cx="100" cy="70" rx="14" ry="9" fill="url(#rose1)" transform="rotate(5 100 70)"/>
+        <ellipse cx="45" cy="25" rx="8" ry="4" fill="url(#leaf1)" transform="rotate(-45 45 25)"/>
+        <ellipse cx="80" cy="55" rx="10" ry="5" fill="url(#leaf1)" transform="rotate(-30 80 55)"/>
+        
+        {/* Right branch */}
+        <path d="M400 0 Q350 30, 320 60 Q290 90, 250 100" stroke="#7a9568" strokeWidth="2" fill="none" opacity="0.7"/>
+        <ellipse cx="370" cy="15" rx="12" ry="8" fill="url(#rose1)" transform="rotate(20 370 15)"/>
+        <ellipse cx="340" cy="40" rx="10" ry="6" fill="url(#rose1)" transform="rotate(10 340 40)"/>
+        <ellipse cx="300" cy="70" rx="14" ry="9" fill="url(#rose1)" transform="rotate(-5 300 70)"/>
+        <ellipse cx="355" cy="25" rx="8" ry="4" fill="url(#leaf1)" transform="rotate(45 355 25)"/>
+        <ellipse cx="320" cy="55" rx="10" ry="5" fill="url(#leaf1)" transform="rotate(30 320 55)"/>
+        
+        {/* Center arch decoration */}
+        <path d="M150 0 Q200 80, 250 0" stroke="#c9a0a0" strokeWidth="1.5" fill="none" opacity="0.5"/>
+        <ellipse cx="175" cy="35" rx="8" ry="5" fill="url(#rose1)" opacity="0.8"/>
+        <ellipse cx="200" cy="50" rx="10" ry="6" fill="url(#rose1)" opacity="0.8"/>
+        <ellipse cx="225" cy="35" rx="8" ry="5" fill="url(#rose1)" opacity="0.8"/>
+      </svg>
+
+      {/* Bottom floral decoration */}
+      <svg className="absolute bottom-0 left-0 w-full h-40 opacity-50" viewBox="0 0 400 120" preserveAspectRatio="xMidYMax slice">
+        {/* Left corner flowers */}
+        <ellipse cx="30" cy="100" rx="15" ry="10" fill="#d4a5a5" opacity="0.7"/>
+        <ellipse cx="60" cy="90" rx="12" ry="8" fill="#c9a0a0" opacity="0.6"/>
+        <ellipse cx="20" cy="80" rx="10" ry="6" fill="#8fa87a" opacity="0.5"/>
+        
+        {/* Right corner flowers */}
+        <ellipse cx="370" cy="100" rx="15" ry="10" fill="#d4a5a5" opacity="0.7"/>
+        <ellipse cx="340" cy="90" rx="12" ry="8" fill="#c9a0a0" opacity="0.6"/>
+        <ellipse cx="380" cy="80" rx="10" ry="6" fill="#8fa87a" opacity="0.5"/>
+        
+        {/* Scattered petals */}
+        <ellipse cx="100" cy="110" rx="6" ry="4" fill="#e8c4c4" opacity="0.4" transform="rotate(30 100 110)"/>
+        <ellipse cx="300" cy="115" rx="5" ry="3" fill="#e8c4c4" opacity="0.4" transform="rotate(-20 300 115)"/>
+        <ellipse cx="200" cy="105" rx="7" ry="4" fill="#e8c4c4" opacity="0.3" transform="rotate(15 200 105)"/>
+      </svg>
+
+      {/* Side decorations */}
+      <div className="absolute left-0 top-1/4 w-16 h-64 opacity-40">
+        <svg viewBox="0 0 60 200" className="w-full h-full">
+          <path d="M0 100 Q30 80, 20 50 Q10 20, 30 0" stroke="#7a9568" strokeWidth="1.5" fill="none"/>
+          <ellipse cx="25" cy="30" rx="8" ry="5" fill="#c9a0a0"/>
+          <ellipse cx="15" cy="60" rx="6" ry="4" fill="#d4a5a5"/>
+          <ellipse cx="20" cy="90" rx="7" ry="4" fill="#c9a0a0"/>
+          <path d="M0 100 Q30 120, 20 150 Q10 180, 30 200" stroke="#7a9568" strokeWidth="1.5" fill="none"/>
+          <ellipse cx="25" cy="130" rx="6" ry="4" fill="#d4a5a5"/>
+          <ellipse cx="15" cy="160" rx="8" ry="5" fill="#c9a0a0"/>
+        </svg>
+      </div>
+
+      <div className="absolute right-0 top-1/4 w-16 h-64 opacity-40">
+        <svg viewBox="0 0 60 200" className="w-full h-full">
+          <path d="M60 100 Q30 80, 40 50 Q50 20, 30 0" stroke="#7a9568" strokeWidth="1.5" fill="none"/>
+          <ellipse cx="35" cy="30" rx="8" ry="5" fill="#c9a0a0"/>
+          <ellipse cx="45" cy="60" rx="6" ry="4" fill="#d4a5a5"/>
+          <ellipse cx="40" cy="90" rx="7" ry="4" fill="#c9a0a0"/>
+          <path d="M60 100 Q30 120, 40 150 Q50 180, 30 200" stroke="#7a9568" strokeWidth="1.5" fill="none"/>
+          <ellipse cx="35" cy="130" rx="6" ry="4" fill="#d4a5a5"/>
+          <ellipse cx="45" cy="160" rx="8" ry="5" fill="#c9a0a0"/>
+        </svg>
+      </div>
+
+      {/* Floating petals animation */}
+      <div className="absolute top-20 left-1/4 w-3 h-3 rounded-full bg-[#e8c4c4] opacity-40 float" style={{ animationDelay: '0s' }} />
+      <div className="absolute top-32 right-1/3 w-2 h-2 rounded-full bg-[#d4a5a5] opacity-30 float" style={{ animationDelay: '1s' }} />
+      <div className="absolute top-48 left-1/3 w-2 h-2 rounded-full bg-[#c9a0a0] opacity-35 float" style={{ animationDelay: '2s' }} />
+      <div className="absolute bottom-40 right-1/4 w-3 h-3 rounded-full bg-[#e8c4c4] opacity-30 float" style={{ animationDelay: '0.5s' }} />
+    </div>
+  )
+
   // ─── Cover Page ───────────────────────────────────────────────────────────────
   if (currentPage === "cover") {
     return (
       <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4">
-        {/* Background Image */}
-        <div 
-          className="absolute inset-0 z-0"
-          style={{
-            backgroundImage: `url('https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-dEwDV9kBC3ZJCtcZZC7xGqADJ21oUv.png')`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat'
-          }}
-        />
-        
-        {/* Soft overlay for text readability */}
-        <div className="absolute inset-0 bg-[#f5efe6]/30 z-[1]" />
+        <DecorativeBackground />
 
         <div className="text-center space-y-10 max-w-md mx-auto relative z-10">
           <div className="space-y-2 fade-in-up delay-100">
             <p 
-              className="text-[#6b5548] text-lg tracking-widest uppercase drop-shadow-sm"
-              style={{ fontFamily: "Cormorant Garamond, serif" }}
+              className="text-[#6b5548] text-xl tracking-widest drop-shadow-sm"
+              style={{ fontFamily: "Amiri, serif" }}
             >
               بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ
             </p>
@@ -224,19 +350,7 @@ export default function Component() {
   if (currentPage === "loading") {
     return (
       <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4">
-        {/* Background Image */}
-        <div 
-          className="absolute inset-0 z-0"
-          style={{
-            backgroundImage: `url('https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-dEwDV9kBC3ZJCtcZZC7xGqADJ21oUv.png')`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat'
-          }}
-        />
-        
-        {/* Overlay */}
-        <div className="absolute inset-0 bg-[#f5efe6]/60 z-[1]" />
+        <DecorativeBackground />
 
         <div className="text-center space-y-10 max-w-md mx-auto relative z-10">
           <div className="relative pulse fade-in-scale">
@@ -282,32 +396,14 @@ export default function Component() {
   // ─── Main Invitation Page ─────────────────────────────────────────────────────
   return (
     <div className="min-h-screen relative overflow-hidden fade-in">
-      {/* Background Image - Fixed and full screen */}
-      <div 
-        className="fixed inset-0 z-0"
-        style={{
-          backgroundImage: `url('https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-dEwDV9kBC3ZJCtcZZC7xGqADJ21oUv.png')`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-          backgroundAttachment: 'fixed'
-        }}
-      />
-      
-      {/* Very subtle overlay for content readability */}
-      <div className="fixed inset-0 bg-[#f5efe6]/40 z-[1]" />
+      <DecorativeBackground />
 
       {/* Back Button */}
       <div className="fixed top-4 left-4 z-20">
         <Button
           onClick={() => {
             setCurrentPage("cover")
-            if (audioRef.current) {
-              audioRef.current.pause()
-              audioRef.current.currentTime = 0
-              audioRef.current = null
-            }
-            audioInitializedRef.current = false
+            stopAudio()
           }}
           variant="ghost"
           className="text-[#6b5548] hover:bg-[#f5efe6]/50 rounded-full px-4 py-2 text-sm font-medium transition-all duration-300 backdrop-blur-sm"
@@ -323,7 +419,7 @@ export default function Component() {
         {/* Header Section */}
         <div className="text-center space-y-6 mb-12 fade-in-up delay-100">
           <p 
-            className="text-[#6b5548] text-base tracking-[0.2em] font-medium"
+            className="text-[#6b5548] text-lg tracking-[0.2em] font-medium"
             style={{ fontFamily: "Amiri, serif" }}
           >
             بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ
