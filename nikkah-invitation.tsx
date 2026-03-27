@@ -311,26 +311,31 @@ export default function Component() {
   // ─── Main Invitation Page with Floral Border Background ─────────────────────────
   return (
     <div className="min-h-screen relative fade-in">
-      {/* Floral Border Background - Fixed for mobile */}
+      {/* Mobile Background - Tall floral image that scrolls with content */}
       <div 
-        className="fixed inset-0"
-        style={{
-          zIndex: -2
-        }}
+        className="absolute inset-0 md:hidden"
+        style={{ zIndex: -2 }}
+      >
+        <img
+          src="/floral-mobile.png"
+          alt=""
+          className="w-full h-auto min-h-full object-cover object-top"
+        />
+      </div>
+      {/* Desktop Background */}
+      <div 
+        className="hidden md:block fixed inset-0"
+        style={{ zIndex: -2 }}
       >
         <img
           src="/floral-border.jpg"
           alt=""
           className="absolute inset-0 w-full h-full object-cover"
-          style={{
-            minHeight: '100vh',
-            minWidth: '100vw'
-          }}
         />
       </div>
-      {/* Subtle white overlay for content readability */}
+      {/* Subtle overlay for content readability */}
       <div 
-        className="fixed inset-0 bg-white/30"
+        className="fixed inset-0 bg-white/20"
         style={{ zIndex: -1 }}
       />
 
@@ -349,33 +354,33 @@ export default function Component() {
         </Button>
       </div>
 
-      {/* Main Content */}
-      <div className="relative max-w-lg mx-auto px-6 py-12" style={{ zIndex: 1 }}>
+      {/* Main Content - Extra top padding on mobile to start below top flowers */}
+      <div className="relative max-w-lg mx-auto px-5 pt-24 md:pt-12 pb-12" style={{ zIndex: 1 }}>
         
         {/* Header Section */}
-        <div className="text-center space-y-6 mb-12 fade-in-up delay-100">
+        <div className="text-center space-y-4 mb-10 px-3 py-6 bg-white/70 backdrop-blur-sm rounded-2xl fade-in-up delay-100">
           <p 
-            className="text-[#6b5548] text-lg tracking-[0.2em] font-medium drop-shadow-sm"
+            className="text-[#6b5548] text-xl tracking-[0.15em] font-medium"
             style={{ fontFamily: "Amiri, serif" }}
           >
             بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ
           </p>
           <p 
-            className="text-[#8b7355] text-xs tracking-[0.15em]"
+            className="text-[#8b7355] text-xs tracking-[0.1em]"
             style={{ fontFamily: "Cormorant Garamond, serif" }}
           >
             In the name of Allah, the Most Gracious, the Most Merciful
           </p>
           
-          <div className="space-y-2 pt-4">
+          <div className="space-y-2 pt-2">
             <h2 
-              className="text-4xl text-[#8b7355] drop-shadow-sm"
+              className="text-3xl md:text-4xl text-[#8b7355]"
               style={{ fontFamily: "Great Vibes, cursive" }}
             >
               Nikkah Mubarak
             </h2>
             <p 
-              className="text-[#6b5548] text-sm tracking-[0.15em] mt-4"
+              className="text-[#6b5548] text-xs tracking-[0.1em] mt-2"
               style={{ fontFamily: "Cormorant Garamond, serif" }}
             >
               Assalamualaikum Warahmatullahi Wabarakatuh
@@ -412,36 +417,36 @@ export default function Component() {
         </div>
 
         {/* Names Section */}
-        <div className="text-center space-y-4 mb-12">
+        <div className="text-center space-y-3 mb-10 px-3 py-6 bg-white/60 backdrop-blur-sm rounded-2xl">
           <div className="fade-in-up delay-300">
             <h1
-              className="text-5xl md:text-6xl text-[#6b5548] font-normal leading-tight drop-shadow-sm"
+              className="text-4xl md:text-6xl text-[#6b5548] font-normal leading-tight"
               style={{ fontFamily: "Great Vibes, cursive" }}
             >
               Syed Usman Hussain
             </h1>
             <p 
-              className="text-[#8b7355] text-sm tracking-wider mt-2 italic"
+              className="text-[#8b7355] text-xs tracking-wider mt-1 italic"
               style={{ fontFamily: "Cormorant Garamond, serif" }}
             >
               Son of Syed Imran Hussain
             </p>
           </div>
           <p 
-            className="text-4xl text-[#c9a0a0] fade-in-scale delay-400"
+            className="text-3xl text-[#c9a0a0] fade-in-scale delay-400"
             style={{ fontFamily: "Great Vibes, cursive" }}
           >
             with
           </p>
           <div className="fade-in-up delay-500">
             <h1
-              className="text-5xl md:text-6xl text-[#6b5548] font-normal leading-tight drop-shadow-sm"
+              className="text-4xl md:text-6xl text-[#6b5548] font-normal leading-tight"
               style={{ fontFamily: "Great Vibes, cursive" }}
             >
               Shafaq Amin
             </h1>
             <p 
-              className="text-[#8b7355] text-sm tracking-wider mt-2 italic"
+              className="text-[#8b7355] text-xs tracking-wider mt-1 italic"
               style={{ fontFamily: "Cormorant Garamond, serif" }}
             >
               Daughter of Muhammad Amin
@@ -450,15 +455,15 @@ export default function Component() {
         </div>
 
         {/* Save the Date Section */}
-        <div className="text-center space-y-4 mb-10 fade-in-up delay-600">
+        <div className="text-center space-y-3 mb-8 px-3 py-5 bg-white/60 backdrop-blur-sm rounded-2xl fade-in-up delay-600">
           <h3 
-            className="text-3xl text-[#8b7355]"
+            className="text-2xl md:text-3xl text-[#8b7355]"
             style={{ fontFamily: "Great Vibes, cursive" }}
           >
             Save the Date
           </h3>
           <p 
-            className="text-[#6b5548] text-sm tracking-wider leading-relaxed"
+            className="text-[#6b5548] text-xs tracking-wider leading-relaxed"
             style={{ fontFamily: "Cormorant Garamond, serif" }}
           >
             By seeking the grace and blessings of Allah Subhanahu Wa Ta&apos;ala, we are honored to hold the following event:
@@ -466,47 +471,47 @@ export default function Component() {
         </div>
 
         {/* Date Section */}
-        <div className="text-center space-y-6 mb-12 fade-in-up delay-700">
+        <div className="text-center space-y-4 mb-10 px-3 py-6 bg-white/70 backdrop-blur-sm rounded-2xl fade-in-up delay-700">
           <p 
-            className="text-[#6b5548] text-lg tracking-[0.3em] uppercase font-medium"
+            className="text-[#6b5548] text-base tracking-[0.2em] uppercase font-medium"
             style={{ fontFamily: "Cormorant Garamond, serif" }}
           >
             Nikkah Ceremony
           </p>
           
-          <div className="flex flex-col items-center gap-4">
+          <div className="flex flex-col items-center gap-3">
             <p 
-              className="text-[#8b7355] text-sm tracking-[0.4em] uppercase font-medium"
+              className="text-[#8b7355] text-sm tracking-[0.3em] uppercase font-medium"
               style={{ fontFamily: "Cormorant Garamond, serif" }}
             >
               April
             </p>
             
-            <div className="flex items-center justify-center gap-4">
-              <div className="w-16 h-px bg-[#c9a0a0]" />
+            <div className="flex items-center justify-center gap-3">
+              <div className="w-10 md:w-16 h-px bg-[#c9a0a0]" />
               <span 
-                className="text-[#6b5548] text-sm tracking-[0.2em] uppercase font-medium"
+                className="text-[#6b5548] text-xs tracking-[0.15em] uppercase font-medium"
                 style={{ fontFamily: "Cormorant Garamond, serif" }}
               >
                 Friday
               </span>
               <span 
-                className="text-6xl text-[#6b5548] font-light"
+                className="text-5xl md:text-6xl text-[#6b5548] font-light"
                 style={{ fontFamily: "Cormorant Garamond, serif" }}
               >
                 3
               </span>
               <span 
-                className="text-[#6b5548] text-sm tracking-[0.2em] uppercase font-medium"
+                className="text-[#6b5548] text-xs tracking-[0.15em] uppercase font-medium"
                 style={{ fontFamily: "Cormorant Garamond, serif" }}
               >
                 2026
               </span>
-              <div className="w-16 h-px bg-[#c9a0a0]" />
+              <div className="w-10 md:w-16 h-px bg-[#c9a0a0]" />
             </div>
 
             <p 
-              className="text-[#8b7355] text-sm tracking-[0.2em] uppercase font-medium"
+              className="text-[#8b7355] text-sm tracking-[0.15em] uppercase font-medium"
               style={{ fontFamily: "Cormorant Garamond, serif" }}
             >
               Baad Namaz-e-Asr
@@ -553,29 +558,29 @@ export default function Component() {
         </div>
 
         {/* Countdown Section */}
-        <div className="text-center space-y-6 mb-12 fade-in-up">
+        <div className="text-center space-y-4 mb-10 px-3 py-6 bg-white/60 backdrop-blur-sm rounded-2xl fade-in-up">
           <p 
-            className="text-3xl text-[#8b7355]"
+            className="text-2xl md:text-3xl text-[#8b7355]"
             style={{ fontFamily: "Great Vibes, cursive" }}
           >
             Counting Down
           </p>
-          <div className="grid grid-cols-4 gap-3 max-w-sm mx-auto">
+          <div className="grid grid-cols-4 gap-2 max-w-xs mx-auto">
             {[
               { value: timeLeft.days, label: "Days" },
               { value: timeLeft.hours, label: "Hours" },
               { value: timeLeft.minutes, label: "Mins" },
               { value: timeLeft.seconds, label: "Secs" },
             ].map(({ value, label }) => (
-              <div key={label} className="bg-white/70 backdrop-blur-sm rounded-lg p-3 shadow-md border border-[#c9a0a0]/30">
+              <div key={label} className="bg-white/80 backdrop-blur-sm rounded-lg p-2 shadow-sm">
                 <div 
-                  className="text-2xl font-medium text-[#6b5548]" 
+                  className="text-xl font-medium text-[#6b5548]" 
                   style={{ fontFamily: "Cormorant Garamond, serif" }}
                 >
                   {value}
                 </div>
                 <div 
-                  className="text-xs text-[#8b7355] tracking-wider uppercase font-medium"
+                  className="text-[10px] text-[#8b7355] tracking-wider uppercase font-medium"
                   style={{ fontFamily: "Cormorant Garamond, serif" }}
                 >
                   {label}
@@ -587,7 +592,7 @@ export default function Component() {
           <Button
             onClick={handleSaveTheDate}
             variant="outline"
-            className="border-[#c9a0a0] text-[#6b5548] hover:bg-white/50 rounded-full px-8 py-2 text-sm tracking-wider font-medium transition-all duration-300"
+            className="border-[#c9a0a0] text-[#6b5548] hover:bg-white/50 rounded-full px-6 py-2 text-xs tracking-wider font-medium transition-all duration-300"
             style={{ fontFamily: "Cormorant Garamond, serif" }}
           >
             Save The Date
@@ -595,15 +600,15 @@ export default function Component() {
         </div>
 
         {/* Islamic Quote */}
-        <div className="text-center space-y-4 mb-12 px-4 py-8 bg-white/70 backdrop-blur-sm rounded-2xl border border-[#c9a0a0]/30 shadow-lg fade-in-up">
+        <div className="text-center space-y-3 mb-10 px-3 py-5 bg-white/70 backdrop-blur-sm rounded-2xl fade-in-up">
           <p 
-            className="text-[#8b7355] text-sm tracking-wider font-medium"
+            className="text-[#8b7355] text-xs tracking-wider font-medium"
             style={{ fontFamily: "Cormorant Garamond, serif" }}
           >
             Allah Tabarak wa Ta&apos;ala says:
           </p>
           <p 
-            className="text-[#6b5548] text-base leading-relaxed italic"
+            className="text-[#6b5548] text-xs leading-relaxed italic px-2"
             style={{ fontFamily: "Cormorant Garamond, serif" }}
           >
             &quot;And among His signs is that He created for you mates from among yourselves, 
@@ -611,7 +616,7 @@ export default function Component() {
             affection and mercy. Indeed, in that are signs for a people who give thought.&quot;
           </p>
           <p 
-            className="text-[#8b7355] text-xs tracking-[0.2em] uppercase font-medium"
+            className="text-[#8b7355] text-[10px] tracking-[0.15em] uppercase font-medium"
             style={{ fontFamily: "Cormorant Garamond, serif" }}
           >
             — Surah Ar-Rum (30:21)
@@ -619,22 +624,22 @@ export default function Component() {
         </div>
 
         {/* RSVP Section */}
-        <div className="text-center space-y-6 mb-12 fade-in-up">
+        <div className="text-center space-y-4 mb-10 px-3 py-5 bg-white/60 backdrop-blur-sm rounded-2xl fade-in-up">
           <p 
-            className="text-3xl text-[#8b7355]"
+            className="text-2xl md:text-3xl text-[#8b7355]"
             style={{ fontFamily: "Great Vibes, cursive" }}
           >
             Kindly Respond
           </p>
           <p 
-            className="text-[#6b5548] text-sm tracking-wider font-medium"
+            className="text-[#6b5548] text-xs tracking-wider font-medium"
             style={{ fontFamily: "Cormorant Garamond, serif" }}
           >
             +92 311 8335838
           </p>
           <Button
             onClick={handleRSVPClick}
-            className="bg-[#8b7355] hover:bg-[#6b5548] text-white rounded-full px-10 py-3 text-sm font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 tracking-wider"
+            className="bg-[#8b7355] hover:bg-[#6b5548] text-white rounded-full px-8 py-2 text-xs font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 tracking-wider"
             style={{ fontFamily: "Cormorant Garamond, serif" }}
           >
             <span className="flex items-center gap-2">
@@ -647,15 +652,15 @@ export default function Component() {
         </div>
 
         {/* Footer */}
-        <div className="text-center space-y-6 pb-8 fade-in-up">
+        <div className="text-center space-y-4 pb-6 px-3 py-5 bg-white/60 backdrop-blur-sm rounded-2xl fade-in-up">
           <p 
-            className="text-[#8b7355] text-sm tracking-wider italic"
+            className="text-[#8b7355] text-xs tracking-wider italic"
             style={{ fontFamily: "Cormorant Garamond, serif" }}
           >
             Your presence will add joy to our special day
           </p>
           <p 
-            className="text-2xl text-[#6b5548]"
+            className="text-xl text-[#6b5548]"
             style={{ fontFamily: "Amiri, serif" }}
           >
             ٱلْـحَـمْدُ لِلّٰهِ رَبِّ ٱلْعَٰلَمِينَ
@@ -663,7 +668,7 @@ export default function Component() {
         </div>
 
         {/* Spacer for bottom padding */}
-        <div className="h-8" />
+        <div className="h-16" />
       </div>
     </div>
   )
