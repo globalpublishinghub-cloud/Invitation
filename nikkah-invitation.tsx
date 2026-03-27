@@ -1,15 +1,17 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useRef } from "react"
+
+// Global audio instance to prevent double play
+let globalAudio: HTMLAudioElement | null = null
+let audioHasStarted = false
 
 export default function Component() {
   const [currentPage, setCurrentPage] = useState("cover")
   const [loadingProgress, setLoadingProgress] = useState(0)
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 })
-  const audioRef = useRef<HTMLAudioElement | null>(null)
-  const isAudioInitialized = useRef(false)
-  const isAudioPlaying = useRef(false)
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     const targetDate = new Date("2026-04-03T16:30:00").getTime()
@@ -28,13 +30,11 @@ export default function Component() {
     return () => clearInterval(timer)
   }, [])
 
-  // Cleanup audio on unmount
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (audioRef.current) {
-        audioRef.current.pause()
-        audioRef.current.src = ""
-        audioRef.current = null
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current)
       }
     }
   }, [])
@@ -81,71 +81,52 @@ export default function Component() {
     window.open(`https://wa.me/${phoneNumber}?text=${message}`, "_blank")
   }
 
-  const initializeAndPlayAudio = useCallback(async () => {
-    // Strict guard against multiple initializations
-    if (isAudioInitialized.current || isAudioPlaying.current) {
-      return
+  const startAudio = () => {
+    // Only create and play audio once ever
+    if (audioHasStarted) return
+    audioHasStarted = true
+
+    if (!globalAudio) {
+      globalAudio = new Audio()
+      globalAudio.src = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/0627%282%29-fHKFYsFQhHNnJVWGHooruickURw9h3.MP3"
+      globalAudio.loop = true
+      globalAudio.volume = 0.7
     }
-    
-    isAudioInitialized.current = true
 
-    try {
-      // If there's already an audio element, clean it up first
-      if (audioRef.current) {
-        audioRef.current.pause()
-        audioRef.current.src = ""
-        audioRef.current = null
-      }
+    globalAudio.play().catch(() => {
+      // Silent fail - audio autoplay blocked
+      audioHasStarted = false
+    })
+  }
 
-      const audio = new Audio()
-      audio.crossOrigin = "anonymous"
-      audio.loop = true
-      audio.volume = 0.7
-      audio.preload = "auto"
-      audio.src = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/0627%282%29-fHKFYsFQhHNnJVWGHooruickURw9h3.MP3"
-      audioRef.current = audio
-
-      await new Promise<void>((resolve, reject) => {
-        const timeout = setTimeout(() => reject(new Error("timeout")), 10000)
-        audio.addEventListener("canplaythrough", () => {
-          clearTimeout(timeout)
-          resolve()
-        }, { once: true })
-        audio.addEventListener("error", () => {
-          clearTimeout(timeout)
-          reject(new Error("load failed"))
-        }, { once: true })
-        audio.load()
-      })
-
-      if (!isAudioPlaying.current) {
-        isAudioPlaying.current = true
-        await audio.play()
-      }
-    } catch {
-      isAudioInitialized.current = false
-      isAudioPlaying.current = false
+  const stopAudio = () => {
+    if (globalAudio) {
+      globalAudio.pause()
+      globalAudio.currentTime = 0
     }
-  }, [])
+    audioHasStarted = false
+  }
 
   const handleOpenInvitation = () => {
     setCurrentPage("loading")
     setLoadingProgress(0)
-    
-    let audioStarted = false
 
-    const progressInterval = setInterval(() => {
+    let audioTriggered = false
+
+    progressIntervalRef.current = setInterval(() => {
       setLoadingProgress((prev) => {
         const newProgress = prev + 2
 
-        // Start audio at 50% (only once)
-        if (newProgress >= 50 && !audioStarted) {
-          audioStarted = true
-          initializeAndPlayAudio()
+        if (newProgress >= 50 && !audioTriggered) {
+          audioTriggered = true
+          startAudio()
         }
 
         if (newProgress >= 100) {
-          clearInterval(progressInterval)
+          if (progressIntervalRef.current) {
+            clearInterval(progressIntervalRef.current)
+            progressIntervalRef.current = null
+          }
           setTimeout(() => setCurrentPage("invitation"), 500)
           return 100
         }
@@ -154,138 +135,39 @@ export default function Component() {
     }, 60)
   }
 
-  const stopAudio = () => {
-    if (audioRef.current) {
-      audioRef.current.pause()
-      audioRef.current.src = ""
-      audioRef.current = null
-    }
-    isAudioInitialized.current = false
-    isAudioPlaying.current = false
-  }
-
-  // Decorative Background Component
-  const DecorativeBackground = () => (
-    <div className="fixed inset-0 z-0 overflow-hidden">
-      {/* Base gradient - warm cream tones */}
-      <div 
-        className="absolute inset-0"
-        style={{
-          background: 'linear-gradient(180deg, #f5efe6 0%, #ebe4d8 30%, #e8dcc8 60%, #f2ebe0 100%)'
-        }}
-      />
-      
-      {/* Subtle texture overlay */}
-      <div 
-        className="absolute inset-0 opacity-30"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c9a0a0' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-        }}
-      />
-
-      {/* Top floral decoration */}
-      <svg className="absolute top-0 left-0 w-full h-48 opacity-60" viewBox="0 0 400 150" preserveAspectRatio="xMidYMin slice">
-        <defs>
-          <linearGradient id="rose1" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#d4a5a5" />
-            <stop offset="100%" stopColor="#c9a0a0" />
-          </linearGradient>
-          <linearGradient id="leaf1" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#8fa87a" />
-            <stop offset="100%" stopColor="#7a9568" />
-          </linearGradient>
-        </defs>
-        
-        {/* Left branch */}
-        <path d="M0 0 Q50 30, 80 60 Q110 90, 150 100" stroke="#7a9568" strokeWidth="2" fill="none" opacity="0.7"/>
-        <ellipse cx="30" cy="15" rx="12" ry="8" fill="url(#rose1)" transform="rotate(-20 30 15)"/>
-        <ellipse cx="60" cy="40" rx="10" ry="6" fill="url(#rose1)" transform="rotate(-10 60 40)"/>
-        <ellipse cx="100" cy="70" rx="14" ry="9" fill="url(#rose1)" transform="rotate(5 100 70)"/>
-        <ellipse cx="45" cy="25" rx="8" ry="4" fill="url(#leaf1)" transform="rotate(-45 45 25)"/>
-        <ellipse cx="80" cy="55" rx="10" ry="5" fill="url(#leaf1)" transform="rotate(-30 80 55)"/>
-        
-        {/* Right branch */}
-        <path d="M400 0 Q350 30, 320 60 Q290 90, 250 100" stroke="#7a9568" strokeWidth="2" fill="none" opacity="0.7"/>
-        <ellipse cx="370" cy="15" rx="12" ry="8" fill="url(#rose1)" transform="rotate(20 370 15)"/>
-        <ellipse cx="340" cy="40" rx="10" ry="6" fill="url(#rose1)" transform="rotate(10 340 40)"/>
-        <ellipse cx="300" cy="70" rx="14" ry="9" fill="url(#rose1)" transform="rotate(-5 300 70)"/>
-        <ellipse cx="355" cy="25" rx="8" ry="4" fill="url(#leaf1)" transform="rotate(45 355 25)"/>
-        <ellipse cx="320" cy="55" rx="10" ry="5" fill="url(#leaf1)" transform="rotate(30 320 55)"/>
-        
-        {/* Center arch decoration */}
-        <path d="M150 0 Q200 80, 250 0" stroke="#c9a0a0" strokeWidth="1.5" fill="none" opacity="0.5"/>
-        <ellipse cx="175" cy="35" rx="8" ry="5" fill="url(#rose1)" opacity="0.8"/>
-        <ellipse cx="200" cy="50" rx="10" ry="6" fill="url(#rose1)" opacity="0.8"/>
-        <ellipse cx="225" cy="35" rx="8" ry="5" fill="url(#rose1)" opacity="0.8"/>
-      </svg>
-
-      {/* Bottom floral decoration */}
-      <svg className="absolute bottom-0 left-0 w-full h-40 opacity-50" viewBox="0 0 400 120" preserveAspectRatio="xMidYMax slice">
-        {/* Left corner flowers */}
-        <ellipse cx="30" cy="100" rx="15" ry="10" fill="#d4a5a5" opacity="0.7"/>
-        <ellipse cx="60" cy="90" rx="12" ry="8" fill="#c9a0a0" opacity="0.6"/>
-        <ellipse cx="20" cy="80" rx="10" ry="6" fill="#8fa87a" opacity="0.5"/>
-        
-        {/* Right corner flowers */}
-        <ellipse cx="370" cy="100" rx="15" ry="10" fill="#d4a5a5" opacity="0.7"/>
-        <ellipse cx="340" cy="90" rx="12" ry="8" fill="#c9a0a0" opacity="0.6"/>
-        <ellipse cx="380" cy="80" rx="10" ry="6" fill="#8fa87a" opacity="0.5"/>
-        
-        {/* Scattered petals */}
-        <ellipse cx="100" cy="110" rx="6" ry="4" fill="#e8c4c4" opacity="0.4" transform="rotate(30 100 110)"/>
-        <ellipse cx="300" cy="115" rx="5" ry="3" fill="#e8c4c4" opacity="0.4" transform="rotate(-20 300 115)"/>
-        <ellipse cx="200" cy="105" rx="7" ry="4" fill="#e8c4c4" opacity="0.3" transform="rotate(15 200 105)"/>
-      </svg>
-
-      {/* Side decorations */}
-      <div className="absolute left-0 top-1/4 w-16 h-64 opacity-40">
-        <svg viewBox="0 0 60 200" className="w-full h-full">
-          <path d="M0 100 Q30 80, 20 50 Q10 20, 30 0" stroke="#7a9568" strokeWidth="1.5" fill="none"/>
-          <ellipse cx="25" cy="30" rx="8" ry="5" fill="#c9a0a0"/>
-          <ellipse cx="15" cy="60" rx="6" ry="4" fill="#d4a5a5"/>
-          <ellipse cx="20" cy="90" rx="7" ry="4" fill="#c9a0a0"/>
-          <path d="M0 100 Q30 120, 20 150 Q10 180, 30 200" stroke="#7a9568" strokeWidth="1.5" fill="none"/>
-          <ellipse cx="25" cy="130" rx="6" ry="4" fill="#d4a5a5"/>
-          <ellipse cx="15" cy="160" rx="8" ry="5" fill="#c9a0a0"/>
-        </svg>
-      </div>
-
-      <div className="absolute right-0 top-1/4 w-16 h-64 opacity-40">
-        <svg viewBox="0 0 60 200" className="w-full h-full">
-          <path d="M60 100 Q30 80, 40 50 Q50 20, 30 0" stroke="#7a9568" strokeWidth="1.5" fill="none"/>
-          <ellipse cx="35" cy="30" rx="8" ry="5" fill="#c9a0a0"/>
-          <ellipse cx="45" cy="60" rx="6" ry="4" fill="#d4a5a5"/>
-          <ellipse cx="40" cy="90" rx="7" ry="4" fill="#c9a0a0"/>
-          <path d="M60 100 Q30 120, 40 150 Q50 180, 30 200" stroke="#7a9568" strokeWidth="1.5" fill="none"/>
-          <ellipse cx="35" cy="130" rx="6" ry="4" fill="#d4a5a5"/>
-          <ellipse cx="45" cy="160" rx="8" ry="5" fill="#c9a0a0"/>
-        </svg>
-      </div>
-
-      {/* Floating petals animation */}
-      <div className="absolute top-20 left-1/4 w-3 h-3 rounded-full bg-[#e8c4c4] opacity-40 float" style={{ animationDelay: '0s' }} />
-      <div className="absolute top-32 right-1/3 w-2 h-2 rounded-full bg-[#d4a5a5] opacity-30 float" style={{ animationDelay: '1s' }} />
-      <div className="absolute top-48 left-1/3 w-2 h-2 rounded-full bg-[#c9a0a0] opacity-35 float" style={{ animationDelay: '2s' }} />
-      <div className="absolute bottom-40 right-1/4 w-3 h-3 rounded-full bg-[#e8c4c4] opacity-30 float" style={{ animationDelay: '0.5s' }} />
-    </div>
-  )
-
-  // ─── Cover Page ───────────────────────────────────────────────────────────────
+  // ─── Cover Page with Video Background ────────────────────────────────────────
   if (currentPage === "cover") {
     return (
       <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4">
-        <DecorativeBackground />
+        {/* Video Background */}
+        <div className="fixed inset-0 z-0">
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="absolute w-full h-full object-cover"
+            poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Crect fill='%23f5efe6'/%3E%3C/svg%3E"
+          >
+            <source
+              src="https://videos.pexels.com/video-files/4909835/4909835-uhd_1440_2732_25fps.mp4"
+              type="video/mp4"
+            />
+          </video>
+          {/* Overlay for text readability */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/50" />
+        </div>
 
         <div className="text-center space-y-10 max-w-md mx-auto relative z-10">
           <div className="space-y-2 fade-in-up delay-100">
             <p 
-              className="text-[#6b5548] text-xl tracking-widest drop-shadow-sm"
+              className="text-white/90 text-xl tracking-widest drop-shadow-lg"
               style={{ fontFamily: "Amiri, serif" }}
             >
               بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ
             </p>
             <p 
-              className="text-[#8b7355] text-sm tracking-[0.2em] mt-2"
+              className="text-white/80 text-sm tracking-[0.2em] mt-2"
               style={{ fontFamily: "Cormorant Garamond, serif" }}
             >
               In the name of Allah, the Most Gracious, the Most Merciful
@@ -295,7 +177,7 @@ export default function Component() {
           {/* Main Title */}
           <div className="fade-in-scale delay-200">
             <h2 
-              className="text-4xl md:text-5xl text-[#8b7355] font-normal tracking-wider"
+              className="text-4xl md:text-5xl text-[#f0d9a0] font-normal tracking-wider drop-shadow-lg"
               style={{ fontFamily: "Great Vibes, cursive" }}
             >
               Nikkah Mubarak
@@ -305,19 +187,19 @@ export default function Component() {
           {/* Names in elegant script */}
           <div className="space-y-4">
             <h1
-              className="text-6xl md:text-7xl text-[#6b5548] font-normal leading-tight drop-shadow-sm fade-in-up delay-300"
+              className="text-6xl md:text-7xl text-white font-normal leading-tight drop-shadow-lg fade-in-up delay-300"
               style={{ fontFamily: "Great Vibes, cursive" }}
             >
               Usman
             </h1>
             <p 
-              className="text-3xl text-[#8b7355] drop-shadow-sm fade-in-scale delay-400"
+              className="text-4xl text-[#f0d9a0] drop-shadow-lg fade-in-scale delay-400"
               style={{ fontFamily: "Great Vibes, cursive" }}
             >
               &
             </p>
             <h1
-              className="text-6xl md:text-7xl text-[#6b5548] font-normal leading-tight drop-shadow-sm fade-in-up delay-500"
+              className="text-6xl md:text-7xl text-white font-normal leading-tight drop-shadow-lg fade-in-up delay-500"
               style={{ fontFamily: "Great Vibes, cursive" }}
             >
               Shafaq
@@ -326,7 +208,7 @@ export default function Component() {
 
           {/* Arabic blessing */}
           <div
-            className="text-2xl text-[#8b7355] font-normal tracking-wider drop-shadow-sm fade-in-up delay-600"
+            className="text-2xl text-[#f0d9a0] font-normal tracking-wider drop-shadow-lg fade-in-up delay-600"
             style={{ fontFamily: "Amiri, serif" }}
           >
             ٱلْـحَـمْدُ لِلّٰهِ
@@ -335,7 +217,7 @@ export default function Component() {
           <div className="pt-4 fade-in-scale delay-700">
             <Button
               onClick={handleOpenInvitation}
-              className="bg-[#8b7355] hover:bg-[#6b5548] text-[#f5efe6] rounded-full px-12 py-4 text-base font-medium shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 tracking-wider gentle-bounce"
+              className="bg-[#8b7355]/90 hover:bg-[#6b5548] text-white border border-[#f0d9a0]/50 rounded-full px-12 py-4 text-base font-medium shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-105 tracking-wider backdrop-blur-sm gentle-bounce"
               style={{ fontFamily: "Cormorant Garamond, serif" }}
             >
               Open Invitation
@@ -346,11 +228,32 @@ export default function Component() {
     )
   }
 
-  // ─── Loading Page ─────────────────────────────────────────────────────────────
+  // ─── Loading Page with Gradient Background ─────────────────────────────────────
   if (currentPage === "loading") {
     return (
       <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4">
-        <DecorativeBackground />
+        {/* Gradient Background */}
+        <div className="fixed inset-0 z-0">
+          <div 
+            className="absolute inset-0"
+            style={{
+              background: 'linear-gradient(135deg, #f5efe6 0%, #e8dcc8 25%, #d4c4b0 50%, #e8dcc8 75%, #f5efe6 100%)'
+            }}
+          />
+          {/* Subtle pattern overlay */}
+          <div 
+            className="absolute inset-0 opacity-20"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c9a0a0' fill-opacity='0.3'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            }}
+          />
+          {/* Floating rose petals */}
+          <div className="absolute top-20 left-1/4 w-4 h-4 rounded-full bg-[#d4a5a5] opacity-40 float" style={{ animationDelay: '0s' }} />
+          <div className="absolute top-32 right-1/3 w-3 h-3 rounded-full bg-[#c9a0a0] opacity-30 float" style={{ animationDelay: '1s' }} />
+          <div className="absolute top-48 left-1/3 w-2 h-2 rounded-full bg-[#e8c4c4] opacity-35 float" style={{ animationDelay: '2s' }} />
+          <div className="absolute bottom-40 right-1/4 w-3 h-3 rounded-full bg-[#d4a5a5] opacity-30 float" style={{ animationDelay: '0.5s' }} />
+          <div className="absolute bottom-60 left-1/5 w-4 h-4 rounded-full bg-[#c9a0a0] opacity-25 float" style={{ animationDelay: '1.5s' }} />
+        </div>
 
         <div className="text-center space-y-10 max-w-md mx-auto relative z-10">
           <div className="relative pulse fade-in-scale">
@@ -393,10 +296,22 @@ export default function Component() {
     )
   }
 
-  // ─── Main Invitation Page ─────────────────────────────────────────────────────
+  // ─── Main Invitation Page with Floral Border Background ─────────────────────────
   return (
     <div className="min-h-screen relative overflow-hidden fade-in">
-      <DecorativeBackground />
+      {/* Floral Border Background */}
+      <div 
+        className="fixed inset-0 z-0"
+        style={{
+          backgroundImage: `url('/floral-border.jpg')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          backgroundAttachment: 'fixed'
+        }}
+      />
+      {/* Subtle white overlay for content readability */}
+      <div className="fixed inset-0 z-0 bg-white/30" />
 
       {/* Back Button */}
       <div className="fixed top-4 left-4 z-20">
@@ -406,7 +321,7 @@ export default function Component() {
             stopAudio()
           }}
           variant="ghost"
-          className="text-[#6b5548] hover:bg-[#f5efe6]/50 rounded-full px-4 py-2 text-sm font-medium transition-all duration-300 backdrop-blur-sm"
+          className="text-[#6b5548] hover:bg-[#f5efe6]/70 rounded-full px-4 py-2 text-sm font-medium transition-all duration-300 backdrop-blur-sm border border-[#c9a0a0]/30"
           style={{ fontFamily: "Cormorant Garamond, serif" }}
         >
           ← Back
@@ -419,7 +334,7 @@ export default function Component() {
         {/* Header Section */}
         <div className="text-center space-y-6 mb-12 fade-in-up delay-100">
           <p 
-            className="text-[#6b5548] text-lg tracking-[0.2em] font-medium"
+            className="text-[#6b5548] text-lg tracking-[0.2em] font-medium drop-shadow-sm"
             style={{ fontFamily: "Amiri, serif" }}
           >
             بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ
@@ -433,7 +348,7 @@ export default function Component() {
           
           <div className="space-y-2 pt-4">
             <h2 
-              className="text-4xl text-[#8b7355]"
+              className="text-4xl text-[#8b7355] drop-shadow-sm"
               style={{ fontFamily: "Great Vibes, cursive" }}
             >
               Nikkah Mubarak
@@ -448,7 +363,7 @@ export default function Component() {
         </div>
 
         {/* Parents Invitation */}
-        <div className="text-center space-y-4 mb-10 px-4 py-6 bg-[#f5efe6]/70 backdrop-blur-sm rounded-2xl border border-[#c9a0a0]/30 fade-in-up delay-200">
+        <div className="text-center space-y-4 mb-10 px-4 py-6 bg-white/60 backdrop-blur-sm rounded-2xl border border-[#c9a0a0]/30 shadow-lg fade-in-up delay-200">
           <p 
             className="text-[#6b5548] text-sm tracking-wider leading-relaxed"
             style={{ fontFamily: "Cormorant Garamond, serif" }}
@@ -479,7 +394,7 @@ export default function Component() {
         <div className="text-center space-y-4 mb-12">
           <div className="fade-in-up delay-300">
             <h1
-              className="text-5xl md:text-6xl text-[#6b5548] font-normal leading-tight"
+              className="text-5xl md:text-6xl text-[#6b5548] font-normal leading-tight drop-shadow-sm"
               style={{ fontFamily: "Great Vibes, cursive" }}
             >
               Syed Usman Hussain
@@ -499,7 +414,7 @@ export default function Component() {
           </p>
           <div className="fade-in-up delay-500">
             <h1
-              className="text-5xl md:text-6xl text-[#6b5548] font-normal leading-tight"
+              className="text-5xl md:text-6xl text-[#6b5548] font-normal leading-tight drop-shadow-sm"
               style={{ fontFamily: "Great Vibes, cursive" }}
             >
               Shafaq Amin
@@ -529,7 +444,7 @@ export default function Component() {
           </p>
         </div>
 
-        {/* Date Section - Reference Style Layout */}
+        {/* Date Section */}
         <div className="text-center space-y-6 mb-12 fade-in-up delay-700">
           <p 
             className="text-[#6b5548] text-lg tracking-[0.3em] uppercase font-medium"
@@ -579,7 +494,7 @@ export default function Component() {
         </div>
 
         {/* Venue Section */}
-        <div className="text-center space-y-4 mb-12 px-4 py-6 bg-[#f5efe6]/70 backdrop-blur-sm rounded-2xl border border-[#c9a0a0]/30 fade-in-up delay-800">
+        <div className="text-center space-y-4 mb-12 px-4 py-6 bg-white/60 backdrop-blur-sm rounded-2xl border border-[#c9a0a0]/30 shadow-lg fade-in-up delay-800">
           <p 
             className="text-[#8b7355] text-sm tracking-[0.15em] uppercase font-medium"
             style={{ fontFamily: "Cormorant Garamond, serif" }}
@@ -602,7 +517,7 @@ export default function Component() {
           <Button
             onClick={handleLocationClick}
             variant="outline"
-            className="mt-4 border-[#c9a0a0] text-[#6b5548] hover:bg-[#f5efe6]/70 rounded-full px-8 py-2 text-sm tracking-wider font-medium transition-all duration-300"
+            className="mt-4 border-[#c9a0a0] text-[#6b5548] hover:bg-white/50 rounded-full px-8 py-2 text-sm tracking-wider font-medium transition-all duration-300"
             style={{ fontFamily: "Cormorant Garamond, serif" }}
           >
             View Location
@@ -631,7 +546,7 @@ export default function Component() {
               { value: timeLeft.minutes, label: "Mins" },
               { value: timeLeft.seconds, label: "Secs" },
             ].map(({ value, label }) => (
-              <div key={label} className="bg-[#f5efe6]/80 backdrop-blur-sm rounded-lg p-3 shadow-sm border border-[#c9a0a0]/30">
+              <div key={label} className="bg-white/70 backdrop-blur-sm rounded-lg p-3 shadow-md border border-[#c9a0a0]/30">
                 <div 
                   className="text-2xl font-medium text-[#6b5548]" 
                   style={{ fontFamily: "Cormorant Garamond, serif" }}
@@ -651,7 +566,7 @@ export default function Component() {
           <Button
             onClick={handleSaveTheDate}
             variant="outline"
-            className="border-[#c9a0a0] text-[#6b5548] hover:bg-[#f5efe6]/70 rounded-full px-8 py-2 text-sm tracking-wider font-medium transition-all duration-300"
+            className="border-[#c9a0a0] text-[#6b5548] hover:bg-white/50 rounded-full px-8 py-2 text-sm tracking-wider font-medium transition-all duration-300"
             style={{ fontFamily: "Cormorant Garamond, serif" }}
           >
             Save The Date
@@ -659,7 +574,7 @@ export default function Component() {
         </div>
 
         {/* Islamic Quote */}
-        <div className="text-center space-y-4 mb-12 px-4 py-8 bg-[#f5efe6]/80 backdrop-blur-sm rounded-2xl border border-[#c9a0a0]/30 fade-in-up">
+        <div className="text-center space-y-4 mb-12 px-4 py-8 bg-white/70 backdrop-blur-sm rounded-2xl border border-[#c9a0a0]/30 shadow-lg fade-in-up">
           <p 
             className="text-[#8b7355] text-sm tracking-wider font-medium"
             style={{ fontFamily: "Cormorant Garamond, serif" }}
@@ -698,7 +613,7 @@ export default function Component() {
           </p>
           <Button
             onClick={handleRSVPClick}
-            className="bg-[#8b7355] hover:bg-[#6b5548] text-[#f5efe6] rounded-full px-10 py-3 text-sm font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 tracking-wider"
+            className="bg-[#8b7355] hover:bg-[#6b5548] text-white rounded-full px-10 py-3 text-sm font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 tracking-wider"
             style={{ fontFamily: "Cormorant Garamond, serif" }}
           >
             <span className="flex items-center gap-2">
