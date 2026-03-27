@@ -153,38 +153,26 @@ export default function Component() {
     }, 60)
   }
 
-  // ─── Cover Page with Elegant Background ────────────────────────────────────────
+  // ─── Cover Page with Video Background ────────────────────────────────────────
   if (currentPage === "cover") {
     return (
       <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4">
-        {/* Elegant Gradient Background */}
+        {/* Video Background */}
         <div className="fixed inset-0 z-0">
-          {/* Base gradient */}
-          <div 
-            className="absolute inset-0"
-            style={{
-              background: 'linear-gradient(135deg, #1a1512 0%, #2d2420 25%, #3d322a 50%, #2d2420 75%, #1a1512 100%)'
-            }}
-          />
-          {/* Shimmer overlay */}
-          <div 
-            className="absolute inset-0 opacity-30"
-            style={{
-              background: 'radial-gradient(ellipse at 30% 20%, rgba(201, 160, 160, 0.3) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, rgba(139, 115, 85, 0.3) 0%, transparent 50%)'
-            }}
-          />
-          {/* Floating decorative elements */}
-          <div className="absolute top-20 left-10 w-32 h-32 rounded-full bg-[#c9a0a0]/10 blur-3xl float" style={{ animationDelay: '0s' }} />
-          <div className="absolute top-40 right-16 w-24 h-24 rounded-full bg-[#f0d9a0]/10 blur-2xl float" style={{ animationDelay: '1s' }} />
-          <div className="absolute bottom-32 left-20 w-20 h-20 rounded-full bg-[#8b7355]/15 blur-2xl float" style={{ animationDelay: '2s' }} />
-          <div className="absolute bottom-48 right-10 w-28 h-28 rounded-full bg-[#c9a0a0]/10 blur-3xl float" style={{ animationDelay: '0.5s' }} />
-          {/* Subtle pattern */}
-          <div 
-            className="absolute inset-0 opacity-5"
-            style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23f0d9a0' fill-opacity='0.8'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-            }}
-          />
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover"
+          >
+            <source
+              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Pink%20Floral%20Wedding%20Invitation%20Video-U8HsFL0ugshdsks5zzScW6prKKyfnY.mp4"
+              type="video/mp4"
+            />
+          </video>
+          {/* Dark overlay for text readability */}
+          <div className="absolute inset-0 bg-black/40" />
         </div>
 
         <div className="text-center space-y-10 max-w-md mx-auto relative z-10">
@@ -257,31 +245,26 @@ export default function Component() {
     )
   }
 
-  // ─── Loading Page with Gradient Background ─────────────────────────────────────
+  // ─── Loading Page with Video Background ─────────────────────────────────────
   if (currentPage === "loading") {
     return (
       <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4">
-        {/* Gradient Background */}
+        {/* Video Background */}
         <div className="fixed inset-0 z-0">
-          <div 
-            className="absolute inset-0"
-            style={{
-              background: 'linear-gradient(135deg, #f5efe6 0%, #e8dcc8 25%, #d4c4b0 50%, #e8dcc8 75%, #f5efe6 100%)'
-            }}
-          />
-          {/* Subtle pattern overlay */}
-          <div 
-            className="absolute inset-0 opacity-20"
-            style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c9a0a0' fill-opacity='0.3'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-            }}
-          />
-          {/* Floating rose petals */}
-          <div className="absolute top-20 left-1/4 w-4 h-4 rounded-full bg-[#d4a5a5] opacity-40 float" style={{ animationDelay: '0s' }} />
-          <div className="absolute top-32 right-1/3 w-3 h-3 rounded-full bg-[#c9a0a0] opacity-30 float" style={{ animationDelay: '1s' }} />
-          <div className="absolute top-48 left-1/3 w-2 h-2 rounded-full bg-[#e8c4c4] opacity-35 float" style={{ animationDelay: '2s' }} />
-          <div className="absolute bottom-40 right-1/4 w-3 h-3 rounded-full bg-[#d4a5a5] opacity-30 float" style={{ animationDelay: '0.5s' }} />
-          <div className="absolute bottom-60 left-1/5 w-4 h-4 rounded-full bg-[#c9a0a0] opacity-25 float" style={{ animationDelay: '1.5s' }} />
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover"
+          >
+            <source
+              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Pink%20White%20Elegant%20Watercolor%20International%20Women%27s%20Day%208%20March%20Greeting%20VIdeo-Y7wtMDktodczZtIEi8EFKloUWAn47D.mp4"
+              type="video/mp4"
+            />
+          </video>
+          {/* Light overlay for content readability */}
+          <div className="absolute inset-0 bg-white/30" />
         </div>
 
         <div className="text-center space-y-10 max-w-md mx-auto relative z-10">
@@ -327,23 +310,32 @@ export default function Component() {
 
   // ─── Main Invitation Page with Floral Border Background ─────────────────────────
   return (
-    <div className="min-h-screen relative overflow-hidden fade-in">
-      {/* Floral Border Background */}
+    <div className="min-h-screen relative fade-in">
+      {/* Floral Border Background - Fixed for mobile */}
       <div 
-        className="fixed inset-0 z-0"
+        className="fixed inset-0"
         style={{
-          backgroundImage: `url('/floral-border.jpg')`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-          backgroundAttachment: 'fixed'
+          zIndex: -2
         }}
-      />
+      >
+        <img
+          src="/floral-border.jpg"
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{
+            minHeight: '100vh',
+            minWidth: '100vw'
+          }}
+        />
+      </div>
       {/* Subtle white overlay for content readability */}
-      <div className="fixed inset-0 z-0 bg-white/30" />
+      <div 
+        className="fixed inset-0 bg-white/30"
+        style={{ zIndex: -1 }}
+      />
 
       {/* Back Button */}
-      <div className="fixed top-4 left-4 z-20">
+      <div className="fixed top-4 left-4" style={{ zIndex: 10 }}>
         <Button
           onClick={() => {
             setCurrentPage("cover")
@@ -358,7 +350,7 @@ export default function Component() {
       </div>
 
       {/* Main Content */}
-      <div className="relative z-10 max-w-lg mx-auto px-6 py-12">
+      <div className="relative max-w-lg mx-auto px-6 py-12" style={{ zIndex: 1 }}>
         
         {/* Header Section */}
         <div className="text-center space-y-6 mb-12 fade-in-up delay-100">
