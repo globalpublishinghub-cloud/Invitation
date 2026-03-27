@@ -3,64 +3,12 @@
 import { Button } from "@/components/ui/button"
 import { useState, useEffect, useRef } from "react"
 
-// Animations are now defined in globals.css
-
-// Decorative floral corner component
-const FloralCorner = ({ position }: { position: "top-left" | "top-right" | "bottom-left" | "bottom-right" }) => {
-  const rotations = {
-    "top-left": "rotate-0",
-    "top-right": "rotate-90",
-    "bottom-right": "rotate-180",
-    "bottom-left": "-rotate-90"
-  }
-  const positions = {
-    "top-left": "top-0 left-0",
-    "top-right": "top-0 right-0",
-    "bottom-right": "bottom-0 right-0",
-    "bottom-left": "bottom-0 left-0"
-  }
-  
-  return (
-    <div className={`absolute ${positions[position]} w-32 h-32 ${rotations[position]} opacity-60 pointer-events-none`}>
-      <svg viewBox="0 0 100 100" className="w-full h-full">
-        <defs>
-          <linearGradient id="floralGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#d4a5a5" />
-            <stop offset="100%" stopColor="#a47060" />
-          </linearGradient>
-        </defs>
-        {/* Decorative swirl */}
-        <path d="M5,50 Q25,20 50,25 Q75,30 70,55 Q65,80 40,75 Q15,70 20,45" 
-              fill="none" stroke="url(#floralGrad)" strokeWidth="1.5" opacity="0.6"/>
-        <circle cx="15" cy="35" r="4" fill="#d4a5a5" opacity="0.5"/>
-        <circle cx="25" cy="20" r="3" fill="#a47060" opacity="0.4"/>
-        <circle cx="40" cy="15" r="2" fill="#9b6b5c" opacity="0.5"/>
-      </svg>
-    </div>
-  )
-}
-
-// Bottom floral arrangement
-const FloralArrangement = () => (
-  <div className="w-full flex justify-center mt-8">
-    <img 
-      src="https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=800&q=80" 
-      alt="Floral decoration"
-      className="w-full max-w-md h-40 object-cover object-top opacity-90 rounded-t-full"
-      style={{ 
-        maskImage: "linear-gradient(to top, black 60%, transparent 100%)",
-        WebkitMaskImage: "linear-gradient(to top, black 60%, transparent 100%)"
-      }}
-      crossOrigin="anonymous"
-    />
-  </div>
-)
-
 export default function Component() {
   const [currentPage, setCurrentPage] = useState("cover")
   const [loadingProgress, setLoadingProgress] = useState(0)
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 })
-  const audioRef = useRef<HTMLAudioElement>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const audioInitializedRef = useRef(false)
 
   useEffect(() => {
     const targetDate = new Date("2026-04-03T16:30:00").getTime()
@@ -121,6 +69,46 @@ export default function Component() {
     window.open(`https://wa.me/${phoneNumber}?text=${message}`, "_blank")
   }
 
+  const initializeAudio = async () => {
+    // Prevent double initialization
+    if (audioInitializedRef.current) return
+    audioInitializedRef.current = true
+
+    try {
+      const audioSrc = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/0627%282%29-fHKFYsFQhHNnJVWGHooruickURw9h3.MP3"
+      const audio = new Audio()
+      audio.crossOrigin = "anonymous"
+      audio.loop = true
+      audio.volume = 0.7
+      audio.preload = "auto"
+      audioRef.current = audio
+      audio.src = audioSrc
+
+      await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => reject(new Error("Audio loading timeout")), 10000)
+        audio.addEventListener("canplaythrough", () => { clearTimeout(timeout); resolve(true) }, { once: true })
+        audio.addEventListener("error", () => { clearTimeout(timeout); reject(new Error("Audio loading failed")) }, { once: true })
+        audio.load()
+      })
+
+      const playPromise = audio.play()
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          const playOnInteraction = () => {
+            audio.play().then(() => {
+              document.removeEventListener("click", playOnInteraction)
+              document.removeEventListener("touchstart", playOnInteraction)
+            }).catch(() => {})
+          }
+          document.addEventListener("click", playOnInteraction, { once: true })
+          document.addEventListener("touchstart", playOnInteraction, { once: true })
+        })
+      }
+    } catch (error) {
+      console.error("Audio setup failed:", error)
+    }
+  }
+
   const handleOpenInvitation = async () => {
     setCurrentPage("loading")
     setLoadingProgress(0)
@@ -129,42 +117,9 @@ export default function Component() {
       setLoadingProgress((prev) => {
         const newProgress = prev + 2
 
+        // Initialize audio at 50% progress (only once)
         if (newProgress >= 50 && prev < 50) {
-          ;(async () => {
-            try {
-              const audioSrc = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/0627%282%29-fHKFYsFQhHNnJVWGHooruickURw9h3.MP3"
-              const audio = new Audio()
-              audio.crossOrigin = "anonymous"
-              audio.loop = true
-              audio.volume = 0.7
-              audio.preload = "auto"
-              audioRef.current = audio
-              audio.src = audioSrc
-
-              await new Promise((resolve, reject) => {
-                const timeout = setTimeout(() => reject(new Error("Audio loading timeout")), 10000)
-                audio.addEventListener("canplaythrough", () => { clearTimeout(timeout); resolve(true) }, { once: true })
-                audio.addEventListener("error", () => { clearTimeout(timeout); reject(new Error("Audio loading failed")) }, { once: true })
-                audio.load()
-              })
-
-              const playPromise = audio.play()
-              if (playPromise !== undefined) {
-                playPromise.catch(() => {
-                  const playOnInteraction = () => {
-                    audio.play().then(() => {
-                      document.removeEventListener("click", playOnInteraction)
-                      document.removeEventListener("touchstart", playOnInteraction)
-                    }).catch(() => {})
-                  }
-                  document.addEventListener("click", playOnInteraction, { once: true })
-                  document.addEventListener("touchstart", playOnInteraction, { once: true })
-                })
-              }
-            } catch (error) {
-              console.error("Audio setup failed:", error)
-            }
-          })()
+          initializeAudio()
         }
 
         if (newProgress >= 100) {
@@ -181,52 +136,62 @@ export default function Component() {
   if (currentPage === "cover") {
     return (
       <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4">
+        {/* Background Image */}
+        <div 
+          className="absolute inset-0 z-0"
+          style={{
+            backgroundImage: `url('https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-dEwDV9kBC3ZJCtcZZC7xGqADJ21oUv.png')`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat'
+          }}
+        />
         
-        
-        {/* Video background */}
-        <video
-          autoPlay
-          muted
-          loop
-          playsInline
-          className="absolute inset-0 w-full h-full object-cover"
-        >
-          <source src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Pink%20White%20Elegant%20Watercolor%20International%20Women%27s%20Day%208%20March%20Greeting%20VIdeo-9zCZ1DWn8iwdBukTsumQpBlKjkW7sz.mp4" type="video/mp4" />
-        </video>
-        
-        {/* Subtle overlay for text readability */}
-        <div className="absolute inset-0 bg-white/20" />
-
-        <div style={{ display: "none" }}>
-          <audio ref={audioRef} preload="auto" />
-        </div>
+        {/* Soft overlay for text readability */}
+        <div className="absolute inset-0 bg-[#f5efe6]/30 z-[1]" />
 
         <div className="text-center space-y-10 max-w-md mx-auto relative z-10">
           <div className="space-y-2 fade-in-up delay-100">
             <p 
-              className="text-[#5a4a42] text-lg tracking-widest uppercase drop-shadow-sm"
+              className="text-[#6b5548] text-lg tracking-widest uppercase drop-shadow-sm"
               style={{ fontFamily: "Cormorant Garamond, serif" }}
             >
-              The Nikkah Of
+              بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ
             </p>
+            <p 
+              className="text-[#8b7355] text-sm tracking-[0.2em] mt-2"
+              style={{ fontFamily: "Cormorant Garamond, serif" }}
+            >
+              In the name of Allah, the Most Gracious, the Most Merciful
+            </p>
+          </div>
+
+          {/* Main Title */}
+          <div className="fade-in-scale delay-200">
+            <h2 
+              className="text-4xl md:text-5xl text-[#8b7355] font-normal tracking-wider"
+              style={{ fontFamily: "Great Vibes, cursive" }}
+            >
+              Nikkah Mubarak
+            </h2>
           </div>
 
           {/* Names in elegant script */}
           <div className="space-y-4">
             <h1
-              className="text-6xl md:text-7xl text-[#4a3a32] font-normal leading-tight drop-shadow-sm fade-in-up delay-200"
+              className="text-6xl md:text-7xl text-[#6b5548] font-normal leading-tight drop-shadow-sm fade-in-up delay-300"
               style={{ fontFamily: "Great Vibes, cursive" }}
             >
               Usman
             </h1>
             <p 
-              className="text-3xl text-[#5a4a42] drop-shadow-sm fade-in-scale delay-300"
+              className="text-3xl text-[#8b7355] drop-shadow-sm fade-in-scale delay-400"
               style={{ fontFamily: "Great Vibes, cursive" }}
             >
               &
             </p>
             <h1
-              className="text-6xl md:text-7xl text-[#4a3a32] font-normal leading-tight drop-shadow-sm fade-in-up delay-400"
+              className="text-6xl md:text-7xl text-[#6b5548] font-normal leading-tight drop-shadow-sm fade-in-up delay-500"
               style={{ fontFamily: "Great Vibes, cursive" }}
             >
               Shafaq
@@ -235,16 +200,16 @@ export default function Component() {
 
           {/* Arabic blessing */}
           <div
-            className="text-2xl text-[#5a4a42] font-normal tracking-wider drop-shadow-sm fade-in-up delay-500"
+            className="text-2xl text-[#8b7355] font-normal tracking-wider drop-shadow-sm fade-in-up delay-600"
             style={{ fontFamily: "Amiri, serif" }}
           >
             ٱلْـحَـمْدُ لِلّٰهِ
           </div>
 
-          <div className="pt-4 fade-in-scale delay-600">
+          <div className="pt-4 fade-in-scale delay-700">
             <Button
               onClick={handleOpenInvitation}
-              className="bg-[#6b5548] hover:bg-[#5a4a42] text-white rounded-full px-12 py-4 text-base font-medium shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 tracking-wider gentle-bounce"
+              className="bg-[#8b7355] hover:bg-[#6b5548] text-[#f5efe6] rounded-full px-12 py-4 text-base font-medium shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 tracking-wider gentle-bounce"
               style={{ fontFamily: "Cormorant Garamond, serif" }}
             >
               Open Invitation
@@ -259,24 +224,23 @@ export default function Component() {
   if (currentPage === "loading") {
     return (
       <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4">
-        
-        
-        {/* Watercolor background */}
+        {/* Background Image */}
         <div 
-          className="absolute inset-0"
+          className="absolute inset-0 z-0"
           style={{
-            background: `
-              radial-gradient(ellipse at top, #f0e6d8 0%, transparent 50%),
-              radial-gradient(ellipse at bottom right, #d4a5a5 0%, transparent 40%),
-              radial-gradient(ellipse at bottom left, #e8dcc8 0%, transparent 40%),
-              linear-gradient(to bottom, #f0e6d8, #e8dcc8)
-            `
+            backgroundImage: `url('https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-dEwDV9kBC3ZJCtcZZC7xGqADJ21oUv.png')`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat'
           }}
         />
+        
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-[#f5efe6]/60 z-[1]" />
 
         <div className="text-center space-y-10 max-w-md mx-auto relative z-10">
           <div className="relative pulse fade-in-scale">
-            <div className="w-48 h-48 mx-auto rounded-full bg-white/80 backdrop-blur-sm p-3 shadow-2xl ring-2 ring-[#d4a5a5]/40">
+            <div className="w-48 h-48 mx-auto rounded-full bg-[#f5efe6]/90 backdrop-blur-sm p-3 shadow-2xl ring-2 ring-[#c9a0a0]/40">
               <div className="w-full h-full rounded-full overflow-hidden">
                 <img
                   src="/monogram.png"
@@ -290,20 +254,20 @@ export default function Component() {
 
           <div className="space-y-6 fade-in-up delay-200">
             <div 
-              className="text-3xl text-[#9b6b5c] font-normal" 
+              className="text-3xl text-[#8b7355] font-normal" 
               style={{ fontFamily: "Great Vibes, cursive" }}
             >
               Preparing Your Invitation...
             </div>
             <div className="w-full max-w-xs mx-auto">
-              <div className="bg-white/60 rounded-full h-2 shadow-inner overflow-hidden">
+              <div className="bg-[#f5efe6]/80 rounded-full h-2 shadow-inner overflow-hidden">
                 <div
-                  className="bg-gradient-to-r from-[#d4a5a5] to-[#a47060] h-2 rounded-full transition-all duration-100 ease-out"
+                  className="bg-gradient-to-r from-[#c9a0a0] to-[#8b7355] h-2 rounded-full transition-all duration-100 ease-out"
                   style={{ width: `${loadingProgress}%` }}
                 />
               </div>
               <div
-                className="text-sm font-medium text-[#9b6b5c] mt-4 tracking-widest"
+                className="text-sm font-medium text-[#8b7355] mt-4 tracking-widest"
                 style={{ fontFamily: "Cormorant Garamond, serif" }}
               >
                 {loadingProgress}%
@@ -318,48 +282,20 @@ export default function Component() {
   // ─── Main Invitation Page ─────────────────────────────────────────────────────
   return (
     <div className="min-h-screen relative overflow-hidden fade-in">
-      
-      
-      {/* Base background */}
+      {/* Background Image - Fixed and full screen */}
       <div 
-        className="fixed inset-0 bg-white"
-      />
-      
-      {/* Left side floral PNG with gradient blend */}
-      <div className="fixed left-0 top-0 bottom-0 w-2/5 md:w-1/3 pointer-events-none z-0 slide-in-left">
-        <img 
-          src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Purple%20And%20White%20Floral%20Wedding%20Invitation%20%281%29-YoDbOHHNQ9niuMQc5CIl0LK7HUm8e7.png"
-          alt=""
-          className="h-full w-full object-contain object-left"
-          style={{
-            maskImage: "linear-gradient(to right, black 60%, transparent 100%)",
-            WebkitMaskImage: "linear-gradient(to right, black 60%, transparent 100%)"
-          }}
-        />
-      </div>
-      
-      {/* Right side floral PNG (mirrored) with gradient blend */}
-      <div className="fixed right-0 top-0 bottom-0 w-2/5 md:w-1/3 pointer-events-none z-0 slide-in-right">
-        <img 
-          src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Purple%20And%20White%20Floral%20Wedding%20Invitation%20%281%29-YoDbOHHNQ9niuMQc5CIl0LK7HUm8e7.png"
-          alt=""
-          className="h-full w-full object-contain object-right scale-x-[-1]"
-          style={{
-            maskImage: "linear-gradient(to left, black 60%, transparent 100%)",
-            WebkitMaskImage: "linear-gradient(to left, black 60%, transparent 100%)"
-          }}
-        />
-      </div>
-      
-      {/* Center gradient overlay for text readability */}
-      <div 
-        className="fixed inset-0 pointer-events-none z-0"
+        className="fixed inset-0 z-0"
         style={{
-          background: `
-            radial-gradient(ellipse at center, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.7) 50%, transparent 80%)
-          `
+          backgroundImage: `url('https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-dEwDV9kBC3ZJCtcZZC7xGqADJ21oUv.png')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          backgroundAttachment: 'fixed'
         }}
       />
+      
+      {/* Very subtle overlay for content readability */}
+      <div className="fixed inset-0 bg-[#f5efe6]/40 z-[1]" />
 
       {/* Back Button */}
       <div className="fixed top-4 left-4 z-20">
@@ -371,9 +307,10 @@ export default function Component() {
               audioRef.current.currentTime = 0
               audioRef.current = null
             }
+            audioInitializedRef.current = false
           }}
           variant="ghost"
-          className="text-[#9b6b5c] hover:bg-[#e8dcc8]/50 rounded-full px-4 py-2 text-sm font-medium transition-all duration-300"
+          className="text-[#6b5548] hover:bg-[#f5efe6]/50 rounded-full px-4 py-2 text-sm font-medium transition-all duration-300 backdrop-blur-sm"
           style={{ fontFamily: "Cormorant Garamond, serif" }}
         >
           ← Back
@@ -386,94 +323,181 @@ export default function Component() {
         {/* Header Section */}
         <div className="text-center space-y-6 mb-12 fade-in-up delay-100">
           <p 
-            className="text-[#6b4a3c] text-sm tracking-[0.3em] uppercase font-medium"
+            className="text-[#6b5548] text-base tracking-[0.2em] font-medium"
+            style={{ fontFamily: "Amiri, serif" }}
+          >
+            بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ
+          </p>
+          <p 
+            className="text-[#8b7355] text-xs tracking-[0.15em]"
             style={{ fontFamily: "Cormorant Garamond, serif" }}
           >
-            Bismillahir Rahmanir Raheem
+            In the name of Allah, the Most Gracious, the Most Merciful
           </p>
           
-          <div className="space-y-1">
+          <div className="space-y-2 pt-4">
+            <h2 
+              className="text-4xl text-[#8b7355]"
+              style={{ fontFamily: "Great Vibes, cursive" }}
+            >
+              Nikkah Mubarak
+            </h2>
             <p 
-              className="text-[#5a3d32] text-lg tracking-widest"
+              className="text-[#6b5548] text-sm tracking-[0.15em] mt-4"
               style={{ fontFamily: "Cormorant Garamond, serif" }}
             >
-              The Nikkah Ceremony Of
+              Assalamualaikum Warahmatullahi Wabarakatuh
             </p>
           </div>
         </div>
 
+        {/* Parents Invitation */}
+        <div className="text-center space-y-4 mb-10 px-4 py-6 bg-[#f5efe6]/70 backdrop-blur-sm rounded-2xl border border-[#c9a0a0]/30 fade-in-up delay-200">
+          <p 
+            className="text-[#6b5548] text-sm tracking-wider leading-relaxed"
+            style={{ fontFamily: "Cormorant Garamond, serif" }}
+          >
+            Mr. & Mrs. Syed Imran Hussain
+          </p>
+          <p 
+            className="text-[#8b7355] text-lg"
+            style={{ fontFamily: "Great Vibes, cursive" }}
+          >
+            and
+          </p>
+          <p 
+            className="text-[#6b5548] text-sm tracking-wider leading-relaxed"
+            style={{ fontFamily: "Cormorant Garamond, serif" }}
+          >
+            Mr. & Mrs. Muhammad Amin
+          </p>
+          <p 
+            className="text-[#8b7355] text-sm tracking-wider pt-2 italic"
+            style={{ fontFamily: "Cormorant Garamond, serif" }}
+          >
+            request the pleasure of your company at the Nikkah ceremony of their beloved children
+          </p>
+        </div>
+
         {/* Names Section */}
         <div className="text-center space-y-4 mb-12">
-          <h1
-            className="text-6xl md:text-7xl text-[#4a3228] font-normal leading-tight fade-in-up delay-200"
-            style={{ fontFamily: "Great Vibes, cursive" }}
-          >
-            Syed Usman
-          </h1>
+          <div className="fade-in-up delay-300">
+            <h1
+              className="text-5xl md:text-6xl text-[#6b5548] font-normal leading-tight"
+              style={{ fontFamily: "Great Vibes, cursive" }}
+            >
+              Syed Usman Hussain
+            </h1>
+            <p 
+              className="text-[#8b7355] text-sm tracking-wider mt-2 italic"
+              style={{ fontFamily: "Cormorant Garamond, serif" }}
+            >
+              Son of Syed Imran Hussain
+            </p>
+          </div>
           <p 
-            className="text-4xl text-[#6b4a3c] fade-in-scale delay-300"
+            className="text-4xl text-[#c9a0a0] fade-in-scale delay-400"
             style={{ fontFamily: "Great Vibes, cursive" }}
           >
-            &
+            with
           </p>
-          <h1
-            className="text-6xl md:text-7xl text-[#4a3228] font-normal leading-tight fade-in-up delay-400"
+          <div className="fade-in-up delay-500">
+            <h1
+              className="text-5xl md:text-6xl text-[#6b5548] font-normal leading-tight"
+              style={{ fontFamily: "Great Vibes, cursive" }}
+            >
+              Shafaq Amin
+            </h1>
+            <p 
+              className="text-[#8b7355] text-sm tracking-wider mt-2 italic"
+              style={{ fontFamily: "Cormorant Garamond, serif" }}
+            >
+              Daughter of Muhammad Amin
+            </p>
+          </div>
+        </div>
+
+        {/* Save the Date Section */}
+        <div className="text-center space-y-4 mb-10 fade-in-up delay-600">
+          <h3 
+            className="text-3xl text-[#8b7355]"
             style={{ fontFamily: "Great Vibes, cursive" }}
           >
-            Shafaq
-          </h1>
+            Save the Date
+          </h3>
+          <p 
+            className="text-[#6b5548] text-sm tracking-wider leading-relaxed"
+            style={{ fontFamily: "Cormorant Garamond, serif" }}
+          >
+            By seeking the grace and blessings of Allah Subhanahu Wa Ta&apos;ala, we are honored to hold the following event:
+          </p>
         </div>
 
         {/* Date Section - Reference Style Layout */}
-        <div className="text-center space-y-6 mb-12 fade-in-up delay-500">
+        <div className="text-center space-y-6 mb-12 fade-in-up delay-700">
           <p 
-            className="text-[#6b4a3c] text-sm tracking-[0.4em] uppercase font-medium"
+            className="text-[#6b5548] text-lg tracking-[0.3em] uppercase font-medium"
             style={{ fontFamily: "Cormorant Garamond, serif" }}
           >
-            April
+            Nikkah Ceremony
           </p>
           
-          <div className="flex items-center justify-center gap-4">
-            <div className="w-20 h-px bg-[#b8928a]" />
-            <span 
-              className="text-[#5a3d32] text-sm tracking-[0.2em] uppercase font-medium"
+          <div className="flex flex-col items-center gap-4">
+            <p 
+              className="text-[#8b7355] text-sm tracking-[0.4em] uppercase font-medium"
               style={{ fontFamily: "Cormorant Garamond, serif" }}
             >
-              Friday
-            </span>
-            <span 
-              className="text-6xl text-[#5a3d32] font-light"
+              April
+            </p>
+            
+            <div className="flex items-center justify-center gap-4">
+              <div className="w-16 h-px bg-[#c9a0a0]" />
+              <span 
+                className="text-[#6b5548] text-sm tracking-[0.2em] uppercase font-medium"
+                style={{ fontFamily: "Cormorant Garamond, serif" }}
+              >
+                Friday
+              </span>
+              <span 
+                className="text-6xl text-[#6b5548] font-light"
+                style={{ fontFamily: "Cormorant Garamond, serif" }}
+              >
+                3
+              </span>
+              <span 
+                className="text-[#6b5548] text-sm tracking-[0.2em] uppercase font-medium"
+                style={{ fontFamily: "Cormorant Garamond, serif" }}
+              >
+                2026
+              </span>
+              <div className="w-16 h-px bg-[#c9a0a0]" />
+            </div>
+
+            <p 
+              className="text-[#8b7355] text-sm tracking-[0.2em] uppercase font-medium"
               style={{ fontFamily: "Cormorant Garamond, serif" }}
             >
-              3
-            </span>
-            <span 
-              className="text-[#5a3d32] text-sm tracking-[0.2em] uppercase font-medium"
-              style={{ fontFamily: "Cormorant Garamond, serif" }}
-            >
-              Baad Namaz e Asr
-            </span>
-            <div className="w-20 h-px bg-[#b8928a]" />
+              Baad Namaz-e-Asr
+            </p>
           </div>
-          
-          <p 
-            className="text-[#6b4a3c] text-sm tracking-[0.4em] uppercase font-medium"
-            style={{ fontFamily: "Cormorant Garamond, serif" }}
-          >
-            2026
-          </p>
         </div>
 
         {/* Venue Section */}
-        <div className="text-center space-y-4 mb-12 fade-in-up delay-600">
+        <div className="text-center space-y-4 mb-12 px-4 py-6 bg-[#f5efe6]/70 backdrop-blur-sm rounded-2xl border border-[#c9a0a0]/30 fade-in-up delay-800">
           <p 
-            className="text-[#5a3d32] text-base tracking-[0.2em] uppercase font-medium"
+            className="text-[#8b7355] text-sm tracking-[0.15em] uppercase font-medium"
+            style={{ fontFamily: "Cormorant Garamond, serif" }}
+          >
+            Venue
+          </p>
+          <p 
+            className="text-[#6b5548] text-lg tracking-[0.2em] uppercase font-medium"
             style={{ fontFamily: "Cormorant Garamond, serif" }}
           >
             Quran Academy
           </p>
           <p 
-            className="text-[#6b4a3c] text-sm tracking-wider font-medium"
+            className="text-[#8b7355] text-sm tracking-wider font-medium"
             style={{ fontFamily: "Cormorant Garamond, serif" }}
           >
             Yaseenabad Branch
@@ -482,7 +506,7 @@ export default function Component() {
           <Button
             onClick={handleLocationClick}
             variant="outline"
-            className="mt-4 border-[#b8928a] text-[#5a3d32] hover:bg-[#e8dcc8]/50 rounded-full px-8 py-2 text-sm tracking-wider font-medium transition-all duration-300"
+            className="mt-4 border-[#c9a0a0] text-[#6b5548] hover:bg-[#f5efe6]/70 rounded-full px-8 py-2 text-sm tracking-wider font-medium transition-all duration-300"
             style={{ fontFamily: "Cormorant Garamond, serif" }}
           >
             View Location
@@ -491,37 +515,15 @@ export default function Component() {
 
         {/* Decorative Divider */}
         <div className="flex items-center justify-center gap-4 mb-12">
-          <div className="w-16 h-px bg-gradient-to-r from-transparent to-[#d4a5a5]" />
-          <div className="w-2 h-2 rounded-full bg-[#d4a5a5]" />
-          <div className="w-16 h-px bg-gradient-to-l from-transparent to-[#d4a5a5]" />
-        </div>
-
-        {/* Parents Section */}
-        <div className="text-center space-y-6 mb-12 px-4">
-          <p 
-            className="text-[#5a3d32] text-sm tracking-wider italic"
-            style={{ fontFamily: "Cormorant Garamond, serif" }}
-          >
-            Son of Mr. & Mrs. Syed Imran Hussain
-          </p>
-          <p 
-            className="text-[#6b4a3c] text-xl"
-            style={{ fontFamily: "Great Vibes, cursive" }}
-          >
-            together with
-          </p>
-          <p 
-            className="text-[#5a3d32] text-sm tracking-wider italic"
-            style={{ fontFamily: "Cormorant Garamond, serif" }}
-          >
-            Daughter of Mr. & Mrs. Muhammad Amin
-          </p>
+          <div className="w-16 h-px bg-gradient-to-r from-transparent to-[#c9a0a0]" />
+          <div className="w-2 h-2 rounded-full bg-[#c9a0a0]" />
+          <div className="w-16 h-px bg-gradient-to-l from-transparent to-[#c9a0a0]" />
         </div>
 
         {/* Countdown Section */}
-        <div className="text-center space-y-6 mb-12">
+        <div className="text-center space-y-6 mb-12 fade-in-up">
           <p 
-            className="text-3xl text-[#5a3d32]"
+            className="text-3xl text-[#8b7355]"
             style={{ fontFamily: "Great Vibes, cursive" }}
           >
             Counting Down
@@ -533,15 +535,15 @@ export default function Component() {
               { value: timeLeft.minutes, label: "Mins" },
               { value: timeLeft.seconds, label: "Secs" },
             ].map(({ value, label }) => (
-              <div key={label} className="bg-white/70 backdrop-blur-sm rounded-lg p-3 shadow-sm border border-[#d4a5a5]/30">
+              <div key={label} className="bg-[#f5efe6]/80 backdrop-blur-sm rounded-lg p-3 shadow-sm border border-[#c9a0a0]/30">
                 <div 
-                  className="text-2xl font-medium text-[#5a3d32]" 
+                  className="text-2xl font-medium text-[#6b5548]" 
                   style={{ fontFamily: "Cormorant Garamond, serif" }}
                 >
                   {value}
                 </div>
                 <div 
-                  className="text-xs text-[#6b4a3c] tracking-wider uppercase font-medium"
+                  className="text-xs text-[#8b7355] tracking-wider uppercase font-medium"
                   style={{ fontFamily: "Cormorant Garamond, serif" }}
                 >
                   {label}
@@ -553,7 +555,7 @@ export default function Component() {
           <Button
             onClick={handleSaveTheDate}
             variant="outline"
-            className="border-[#b8928a] text-[#5a3d32] hover:bg-[#e8dcc8]/50 rounded-full px-8 py-2 text-sm tracking-wider font-medium transition-all duration-300"
+            className="border-[#c9a0a0] text-[#6b5548] hover:bg-[#f5efe6]/70 rounded-full px-8 py-2 text-sm tracking-wider font-medium transition-all duration-300"
             style={{ fontFamily: "Cormorant Garamond, serif" }}
           >
             Save The Date
@@ -561,23 +563,23 @@ export default function Component() {
         </div>
 
         {/* Islamic Quote */}
-        <div className="text-center space-y-4 mb-12 px-4 py-8 bg-white/60 backdrop-blur-sm rounded-2xl border border-[#d4a5a5]/20">
+        <div className="text-center space-y-4 mb-12 px-4 py-8 bg-[#f5efe6]/80 backdrop-blur-sm rounded-2xl border border-[#c9a0a0]/30 fade-in-up">
           <p 
-            className="text-[#5a3d32] text-sm tracking-wider font-medium"
+            className="text-[#8b7355] text-sm tracking-wider font-medium"
             style={{ fontFamily: "Cormorant Garamond, serif" }}
           >
-            Allah Subhanahu Wa Ta'ala says:
+            Allah Tabarak wa Ta&apos;ala says:
           </p>
           <p 
-            className="text-[#4a3228] text-base leading-relaxed italic"
+            className="text-[#6b5548] text-base leading-relaxed italic"
             style={{ fontFamily: "Cormorant Garamond, serif" }}
           >
-            "And among His signs is that He created for you mates from among yourselves, 
+            &quot;And among His signs is that He created for you mates from among yourselves, 
             that you may dwell in tranquility with them, and He placed between you 
-            affection and mercy."
+            affection and mercy. Indeed, in that are signs for a people who give thought.&quot;
           </p>
           <p 
-            className="text-[#5a3d32] text-xs tracking-[0.2em] uppercase font-medium"
+            className="text-[#8b7355] text-xs tracking-[0.2em] uppercase font-medium"
             style={{ fontFamily: "Cormorant Garamond, serif" }}
           >
             — Surah Ar-Rum (30:21)
@@ -585,22 +587,22 @@ export default function Component() {
         </div>
 
         {/* RSVP Section */}
-        <div className="text-center space-y-6 mb-12">
+        <div className="text-center space-y-6 mb-12 fade-in-up">
           <p 
-            className="text-3xl text-[#5a3d32]"
+            className="text-3xl text-[#8b7355]"
             style={{ fontFamily: "Great Vibes, cursive" }}
           >
             Kindly Respond
           </p>
           <p 
-            className="text-[#4a3228] text-sm tracking-wider font-medium"
+            className="text-[#6b5548] text-sm tracking-wider font-medium"
             style={{ fontFamily: "Cormorant Garamond, serif" }}
           >
             +92 311 8335838
           </p>
           <Button
             onClick={handleRSVPClick}
-            className="bg-[#6b4a3c] hover:bg-[#5a3d32] text-white rounded-full px-10 py-3 text-sm font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 tracking-wider"
+            className="bg-[#8b7355] hover:bg-[#6b5548] text-[#f5efe6] rounded-full px-10 py-3 text-sm font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 tracking-wider"
             style={{ fontFamily: "Cormorant Garamond, serif" }}
           >
             <span className="flex items-center gap-2">
@@ -613,15 +615,15 @@ export default function Component() {
         </div>
 
         {/* Footer */}
-        <div className="text-center space-y-6 pb-8">
+        <div className="text-center space-y-6 pb-8 fade-in-up">
           <p 
-            className="text-[#5a3d32] text-sm tracking-wider italic"
+            className="text-[#8b7355] text-sm tracking-wider italic"
             style={{ fontFamily: "Cormorant Garamond, serif" }}
           >
             Your presence will add joy to our special day
           </p>
           <p 
-            className="text-2xl text-[#6b4a3c]"
+            className="text-2xl text-[#6b5548]"
             style={{ fontFamily: "Amiri, serif" }}
           >
             ٱلْـحَـمْدُ لِلّٰهِ رَبِّ ٱلْعَٰلَمِينَ
