@@ -171,20 +171,18 @@ export default function Component() {
               type="video/mp4"
             />
           </video>
-          {/* Dark overlay for text readability */}
-          <div className="absolute inset-0 bg-black/40" />
         </div>
 
         <div className="text-center space-y-10 max-w-md mx-auto relative z-10">
           <div className="space-y-2 fade-in-up delay-100">
             <p 
-              className="text-white/90 text-xl tracking-widest drop-shadow-lg"
+              className="text-[#6b5548] text-xl tracking-widest drop-shadow-sm"
               style={{ fontFamily: "Amiri, serif" }}
             >
               بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ
             </p>
             <p 
-              className="text-white/80 text-sm tracking-[0.2em] mt-2"
+              className="text-[#8b7355] text-sm tracking-[0.2em] mt-2"
               style={{ fontFamily: "Cormorant Garamond, serif" }}
             >
               In the name of Allah, the Most Gracious, the Most Merciful
@@ -194,7 +192,7 @@ export default function Component() {
           {/* Main Title */}
           <div className="fade-in-scale delay-200">
             <h2 
-              className="text-4xl md:text-5xl text-[#f0d9a0] font-normal tracking-wider drop-shadow-lg"
+              className="text-4xl md:text-5xl text-[#8b7355] font-normal tracking-wider drop-shadow-sm"
               style={{ fontFamily: "Great Vibes, cursive" }}
             >
               Nikkah Mubarak
@@ -204,19 +202,19 @@ export default function Component() {
           {/* Names in elegant script */}
           <div className="space-y-4">
             <h1
-              className="text-6xl md:text-7xl text-white font-normal leading-tight drop-shadow-lg fade-in-up delay-300"
+              className="text-6xl md:text-7xl text-[#6b5548] font-normal leading-tight drop-shadow-sm fade-in-up delay-300"
               style={{ fontFamily: "Great Vibes, cursive" }}
             >
               Usman
             </h1>
             <p 
-              className="text-4xl text-[#f0d9a0] drop-shadow-lg fade-in-scale delay-400"
+              className="text-4xl text-[#c9a0a0] drop-shadow-sm fade-in-scale delay-400"
               style={{ fontFamily: "Great Vibes, cursive" }}
             >
               &
             </p>
             <h1
-              className="text-6xl md:text-7xl text-white font-normal leading-tight drop-shadow-lg fade-in-up delay-500"
+              className="text-6xl md:text-7xl text-[#6b5548] font-normal leading-tight drop-shadow-sm fade-in-up delay-500"
               style={{ fontFamily: "Great Vibes, cursive" }}
             >
               Shafaq
@@ -225,7 +223,7 @@ export default function Component() {
 
           {/* Arabic blessing */}
           <div
-            className="text-2xl text-[#f0d9a0] font-normal tracking-wider drop-shadow-lg fade-in-up delay-600"
+            className="text-2xl text-[#8b7355] font-normal tracking-wider drop-shadow-sm fade-in-up delay-600"
             style={{ fontFamily: "Amiri, serif" }}
           >
             ٱلْـحَـمْدُ لِلّٰهِ
@@ -234,7 +232,7 @@ export default function Component() {
           <div className="pt-4 fade-in-scale delay-700">
             <Button
               onClick={handleOpenInvitation}
-              className="bg-[#8b7355]/90 hover:bg-[#6b5548] text-white border border-[#f0d9a0]/50 rounded-full px-12 py-4 text-base font-medium shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-105 tracking-wider backdrop-blur-sm gentle-bounce"
+              className="bg-[#8b7355] hover:bg-[#6b5548] text-white rounded-full px-12 py-4 text-base font-medium shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 tracking-wider gentle-bounce"
               style={{ fontFamily: "Cormorant Garamond, serif" }}
             >
               Open Invitation
@@ -355,10 +353,10 @@ export default function Component() {
       </div>
 
       {/* Main Content - Extra top padding on mobile to start below top flowers */}
-      <div className="relative max-w-lg mx-auto px-5 pt-24 md:pt-12 pb-12" style={{ zIndex: 1 }}>
+      <div className="relative max-w-lg mx-auto px-5 pt-36 md:pt-12 pb-12" style={{ zIndex: 1 }}>
         
         {/* Header Section */}
-        <div className="text-center space-y-4 mb-10 px-3 py-6 bg-white/70 backdrop-blur-sm rounded-2xl fade-in-up delay-100">
+        <div className="text-center space-y-4 mb-16 px-3 py-6 bg-white/70 backdrop-blur-sm rounded-2xl fade-in-up delay-100">
           <p 
             className="text-[#6b5548] text-xl tracking-[0.15em] font-medium"
             style={{ fontFamily: "Amiri, serif" }}
